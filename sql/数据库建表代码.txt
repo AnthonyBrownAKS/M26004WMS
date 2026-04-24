@@ -1,0 +1,108 @@
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS yiwei DEFAULT CHARSET utf8mb4;
+USE yiwei;
+
+-- =========================
+-- 1. 物料表 material
+-- =========================
+CREATE TABLE material (
+material_id VARCHAR(50) PRIMARY KEY COMMENT '物料ID',
+material_code VARCHAR(50) COMMENT '物料编码',
+material_name VARCHAR(255) COMMENT '物料名称',
+in_time DATETIME COMMENT '入库时间',
+out_time DATETIME COMMENT '出库时间',
+status VARCHAR(50) COMMENT '状态'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
+-- 2. 容器表 container
+-- =========================
+CREATE TABLE container (
+container_id VARCHAR(50) PRIMARY KEY COMMENT '容器ID',
+material_id VARCHAR(50) COMMENT '物料ID',
+quantity INT COMMENT '容量/数量',
+location_id VARCHAR(50) COMMENT '库位ID',
+status VARCHAR(50) COMMENT '状态(EMPTY/OCCUPIED/LOCKED)',
+
+```
+INDEX idx_material_id (material_id),
+INDEX idx_location_id (location_id),
+
+CONSTRAINT fk_container_material 
+    FOREIGN KEY (material_id) REFERENCES material(material_id),
+
+CONSTRAINT fk_container_location 
+    FOREIGN KEY (location_id) REFERENCES location(location_id)
+```
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
+-- 3. 库位表 location
+-- =========================
+CREATE TABLE location (
+location_id VARCHAR(50) PRIMARY KEY COMMENT '库位ID',
+area VARCHAR(50) COMMENT '分区',
+row_no INT COMMENT '行',
+col_no INT COMMENT '列',
+level_no INT COMMENT '层',
+status VARCHAR(50) COMMENT '状态(FREE/OCCUPIED)',
+container_id VARCHAR(50) COMMENT '容器ID',
+
+```
+INDEX idx_container_id (container_id),
+
+CONSTRAINT fk_location_container 
+    FOREIGN KEY (container_id) REFERENCES container(container_id)
+```
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
+-- 4. 任务表 task
+-- =========================
+CREATE TABLE task (
+task_id VARCHAR(50) PRIMARY KEY COMMENT '任务ID',
+task_type VARCHAR(50) COMMENT '任务类型(IN/OUT)',
+status VARCHAR(50) COMMENT '状态(CREATED/RUNNING/FINISHED/FAILED)',
+
+```
+container_id VARCHAR(50),
+material_id VARCHAR(50),
+source_location_id VARCHAR(50),
+target_location_id VARCHAR(50),
+
+create_time DATETIME,
+execute_time DATETIME,
+finish_time DATETIME,
+
+INDEX idx_container_id (container_id),
+INDEX idx_material_id (material_id),
+
+CONSTRAINT fk_task_container 
+    FOREIGN KEY (container_id) REFERENCES container(container_id),
+
+CONSTRAINT fk_task_material 
+    FOREIGN KEY (material_id) REFERENCES material(material_id)
+```
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================
+-- 5. 任务日志表 task_log
+-- =========================
+CREATE TABLE task_log (
+log_id VARCHAR(50) PRIMARY KEY COMMENT '日志ID',
+task_id VARCHAR(50) COMMENT '任务ID',
+step VARCHAR(255) COMMENT '任务阶段',
+message VARCHAR(255) COMMENT '阶段说明',
+time DATETIME COMMENT '记录时间',
+
+```
+INDEX idx_task_id (task_id),
+
+CONSTRAINT fk_log_task 
+    FOREIGN KEY (task_id) REFERENCES task(task_id)
+```
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
