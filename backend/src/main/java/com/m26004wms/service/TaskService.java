@@ -1,5 +1,7 @@
 package com.m26004wms.service;
 
+import com.m26004wms.entity.Task;
+
 public interface TaskService {
 
     /**
@@ -13,8 +15,8 @@ public interface TaskService {
     void createOutboundTask(String containerId);
 
     /**
-     * 执行任务（简单版调度器）
+     * 执行任务 (任务队列)
      */
-    void executeTask();
+    public void executeSingleTask(Task task);
 
 }

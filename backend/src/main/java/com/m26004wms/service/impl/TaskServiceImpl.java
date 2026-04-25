@@ -6,6 +6,7 @@ import com.m26004wms.mapper.*;
 import com.m26004wms.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +32,7 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public void createInboundTask(String materialId, int quantity) {
-
+        // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
         task.setTaskType("IN");
@@ -39,6 +40,7 @@ public class TaskServiceImpl implements TaskService {
         task.setMaterialId(materialId);
         task.setCreateTime(LocalDateTime.now());
 
+        // 任务进入队列
         taskMapper.insert(task);
     }
 
@@ -47,7 +49,7 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public void createOutboundTask(String containerId) {
-
+        // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
         task.setTaskType("OUT");
@@ -55,58 +57,53 @@ public class TaskServiceImpl implements TaskService {
         task.setContainerId(containerId);
         task.setCreateTime(LocalDateTime.now());
 
+        // 任务进入队列
         taskMapper.insert(task);
     }
 
+
     /**
-     * 简单任务执行器（模拟调度）
+     * 任务队列
+     * 事务处理
      */
+    @Transactional
     @Override
-    public void executeTask() {
+    public void executeSingleTask(Task task) {
 
-        // 查找待执行任务
-        QueryWrapper<Task> wrapper = new QueryWrapper<>();
-        wrapper.eq("status", "CREATED");
+        task.setExecuteTime(LocalDateTime.now());
+        taskMapper.updateById(task);
 
-        List<Task> tasks = taskMapper.selectList(wrapper);
-
-        for (Task task : tasks) {
-
-            task.setStatus("RUNNING");
-            task.setExecuteTime(LocalDateTime.now());
-            taskMapper.updateById(task);
-
-            if ("IN".equals(task.getTaskType())) {
-                handleInbound(task);
-            } else {
-                handleOutbound(task);
-            }
+        if ("IN".equals(task.getTaskType())) {
+            handleInbound(task);
+        } else {
+            handleOutbound(task);
         }
+
     }
 
     /**
      * 入库处理
+     * 事务处理
      */
-    private void handleInbound(Task task) {
+    @Transactional
+    public void handleInbound(Task task) {
 
-        // 1. 找空容器
-        QueryWrapper<Container> cWrapper = new QueryWrapper<>();
-        cWrapper.eq("status", "EMPTY");
-        Container container = containerMapper.selectOne(cWrapper);
+        // 1. 找空库位
+        Location location = locationMapper.selectEmptyLocationForUpdate();
 
-        // 2. 找空库位
-        QueryWrapper<Location> lWrapper = new QueryWrapper<>();
-        lWrapper.eq("status", "FREE");
-        Location location = locationMapper.selectOne(lWrapper);
+        // 2. 找空容器
+        Container container = containerMapper.selectEmptyContainerForUpdate();
 
+        // ERROR:异常处理
         if (container == null || location == null) {
             failTask(task, "无可用容器或库位");
             return;
         }
 
-        // 3. 绑定关系
+        // 3. 绑定资源
+        // 状态锁
         container.setMaterialId(task.getMaterialId());
-        container.setStatus("OCCUPIED");
+        container.setStatus("LOCKED");
         container.setLocationId(location.getLocationId());
         containerMapper.updateById(container);
 
@@ -114,7 +111,27 @@ public class TaskServiceImpl implements TaskService {
         location.setContainerId(container.getContainerId());
         locationMapper.updateById(location);
 
-        // 4. 更新任务
+
+        // 4.生成设备执行指令
+
+
+        // 5.发送给设备控制模块
+
+
+        // 6.任务状态=RUNNING
+        task.setStatus("RUNNING");
+
+        // 7.等待执行结果
+
+
+        // 8.执行成功？
+
+
+        // 9.更新库存/容器/库位状态
+        container.setStatus("OCCUPIED");
+        containerMapper.updateById(container);
+
+        // 10.任务状态=Finished
         task.setContainerId(container.getContainerId());
         task.setTargetLocationId(location.getLocationId());
         finishTask(task, "入库完成");
@@ -122,9 +139,12 @@ public class TaskServiceImpl implements TaskService {
 
     /**
      * 出库处理
+     * 事务处理
      */
-    private void handleOutbound(Task task) {
+    @Transactional
+    public void handleOutbound(Task task) {
 
+        // 1.查找目标容器
         Container container = containerMapper.selectById(task.getContainerId());
 
         if (container == null) {
@@ -132,22 +152,37 @@ public class TaskServiceImpl implements TaskService {
             return;
         }
 
+        // 2.获取库位信息
         Location location = locationMapper.selectById(container.getLocationId());
 
-        // 1. 清空容器
+        // 3.设备执行
+
+
+        // 4.发送给设备控制模块
+
+
+        // 5.任务状态=RUNNING
+        task.setStatus("FINISHED");
+
+        // 6.等待执行结果
+
+
+        // 7.执行成功？
+
+
+        // 8.更新库存/容器/库位状态
         container.setMaterialId(null);
         container.setStatus("EMPTY");
         container.setLocationId(null);
         containerMapper.updateById(container);
 
-        // 2. 释放库位
         if (location != null) {
             location.setStatus("FREE");
             location.setContainerId(null);
             locationMapper.updateById(location);
         }
 
-        // 3. 更新任务
+        // 9. 任务状态=Finished
         task.setSourceLocationId(location != null ? location.getLocationId() : null);
         finishTask(task, "出库完成");
     }
