@@ -1,9 +1,11 @@
 package com.m26004wms;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@MapperScan("com.m26004wms.mapper")
 public class BackendApplication {
 
     public static void main(String[] args) {

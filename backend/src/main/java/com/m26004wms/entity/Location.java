@@ -1,10 +1,14 @@
 package com.m26004wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
+@TableName("location")
 public class Location {
 
+    @TableId("location_id")
     private String locationId;
 
     private String area;
