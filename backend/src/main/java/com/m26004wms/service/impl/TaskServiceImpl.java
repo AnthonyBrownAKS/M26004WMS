@@ -1,8 +1,10 @@
 package com.m26004wms.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.entity.*;
 import com.m26004wms.mapper.*;
+import com.m26004wms.queue.TaskQueue;
 import com.m26004wms.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,11 +29,14 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private TaskLogMapper taskLogMapper;
 
+    @Autowired
+    private TaskQueue taskQueue;
+
     /**
      * 创建入库任务
      */
     @Override
-    public void createInboundTask(String materialId, int quantity) {
+    public String createInboundTask(String materialId, int quantity) {
         // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
@@ -41,14 +46,17 @@ public class TaskServiceImpl implements TaskService {
         task.setCreateTime(LocalDateTime.now());
 
         // 任务进入队列
+        taskQueue.addTask(task);
+
         taskMapper.insert(task);
+        return task.getTaskId();
     }
 
     /**
      * 创建出库任务
      */
     @Override
-    public void createOutboundTask(String containerId) {
+    public String createOutboundTask(String containerId) {
         // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
@@ -58,7 +66,10 @@ public class TaskServiceImpl implements TaskService {
         task.setCreateTime(LocalDateTime.now());
 
         // 任务进入队列
+        taskQueue.addTask(task);
+
         taskMapper.insert(task);
+        return task.getTaskId();
     }
 
 
@@ -79,6 +90,25 @@ public class TaskServiceImpl implements TaskService {
             handleOutbound(task);
         }
 
+    }
+
+
+    @Override
+    public Task getById(String taskId) {
+        return taskMapper.selectById(taskId);
+    }
+
+
+    @Override
+    public List<Task> list() {
+        return taskMapper.selectList(null);
+    }
+
+
+    @Override
+    public IPage<Task> pageTasks(int current, int size) {
+        Page<Task> page = new Page<>(current, size);
+        return taskMapper.selectPage(page, null);
     }
 
     /**
