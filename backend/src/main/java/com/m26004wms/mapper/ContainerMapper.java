@@ -1,0 +1,9 @@
+package com.m26004wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.m26004wms.entity.Container;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface ContainerMapper extends BaseMapper<Container> {
+}
