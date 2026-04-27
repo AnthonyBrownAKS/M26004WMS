@@ -31,13 +31,41 @@ CREATE TABLE material (
 -- 2. 容器表 container
 -- =========================
 CREATE TABLE container (
-container_id VARCHAR(50) PRIMARY KEY COMMENT '容器ID',
-material_id VARCHAR(50) COMMENT '物料ID',
-quantity INT COMMENT '容量/数量',
-location_id VARCHAR(50) COMMENT '库位ID',
-status VARCHAR(50) COMMENT '状态(EMPTY/OCCUPIED/LOCKED)',
+    id VARCHAR(64) PRIMARY KEY COMMENT '主键ID',
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    warehouse_id VARCHAR(64) NOT NULL COMMENT '仓库ID',
+
+    code VARCHAR(64) NOT NULL COMMENT '容器编码',
+
+    barcode VARCHAR(128) DEFAULT NULL COMMENT '条码',
+
+    container_type_id VARCHAR(64) DEFAULT NULL COMMENT '容器类型ID',
+
+    load_state INT DEFAULT 0 COMMENT '载荷状态',
+
+    location_id VARCHAR(64) DEFAULT NULL COMMENT '库位ID',
+
+    is_stack TINYINT(1) DEFAULT 0 COMMENT '是否可堆叠',
+
+    is_deleted TINYINT(1) DEFAULT 0 COMMENT '是否删除',
+
+    deleter_id VARCHAR(64) DEFAULT NULL COMMENT '删除人ID',
+
+    deletion_time DATETIME DEFAULT NULL COMMENT '删除时间',
+
+    last_modification_time DATETIME DEFAULT NULL COMMENT '最后修改时间',
+
+    last_modifier_id VARCHAR(64) DEFAULT NULL COMMENT '最后修改人ID',
+
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    creator_id VARCHAR(64) DEFAULT NULL COMMENT '创建人ID',
+
+    extra_properties TEXT COMMENT '扩展属性',
+
+    concurrency_stamp VARCHAR(64) DEFAULT NULL COMMENT '并发控制'
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='容器表';
 
 -- =========================
 -- 3. 库位表 location

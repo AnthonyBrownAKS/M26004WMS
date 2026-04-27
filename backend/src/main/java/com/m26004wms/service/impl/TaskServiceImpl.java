@@ -131,39 +131,39 @@ public class TaskServiceImpl implements TaskService {
 
         // 3. 绑定资源
         // 状态锁
-        container.setMaterialId(task.getMaterialId());
-        container.setStatus("LOCKED");
-        container.setLocationId(location.getLocationId());
-        containerMapper.updateById(container);
-
-        location.setStatus("OCCUPIED");
-        location.setContainerId(container.getContainerId());
-        locationMapper.updateById(location);
-
-
-        // 4.生成设备执行指令
-
-
-        // 5.发送给设备控制模块
-
-
-        // 6.任务状态=RUNNING
-        task.setStatus("RUNNING");
-
-        // 7.等待执行结果
-
-
-        // 8.执行成功？
-
-
-        // 9.更新库存/容器/库位状态
-        container.setStatus("OCCUPIED");
-        containerMapper.updateById(container);
-
-        // 10.任务状态=Finished
-        task.setContainerId(container.getContainerId());
-        task.setTargetLocationId(location.getLocationId());
-        finishTask(task, "入库完成");
+//        container.setMaterialId(task.getMaterialId());
+//        container.setStatus("LOCKED");
+//        container.setLocationId(location.getLocationId());
+//        containerMapper.updateById(container);
+//
+//        location.setStatus("OCCUPIED");
+//        location.setContainerId(container.getContainerId());
+//        locationMapper.updateById(location);
+//
+//
+//        // 4.生成设备执行指令
+//
+//
+//        // 5.发送给设备控制模块
+//
+//
+//        // 6.任务状态=RUNNING
+//        task.setStatus("RUNNING");
+//
+//        // 7.等待执行结果
+//
+//
+//        // 8.执行成功？
+//
+//
+//        // 9.更新库存/容器/库位状态
+//        container.setStatus("OCCUPIED");
+//        containerMapper.updateById(container);
+//
+//        // 10.任务状态=Finished
+//        task.setContainerId(container.getContainerId());
+//        task.setTargetLocationId(location.getLocationId());
+//        finishTask(task, "入库完成");
     }
 
     /**
@@ -199,17 +199,17 @@ public class TaskServiceImpl implements TaskService {
         // 7.执行成功？
 
 
-        // 8.更新库存/容器/库位状态
-        container.setMaterialId(null);
-        container.setStatus("EMPTY");
-        container.setLocationId(null);
-        containerMapper.updateById(container);
-
-        if (location != null) {
-            location.setStatus("FREE");
-            location.setContainerId(null);
-            locationMapper.updateById(location);
-        }
+//        // 8.更新库存/容器/库位状态
+//        container.setMaterialId(null);
+//        container.setStatus("EMPTY");
+//        container.setLocationId(null);
+//        containerMapper.updateById(container);
+//
+//        if (location != null) {
+//            location.setStatus("FREE");
+//            location.setContainerId(null);
+//            locationMapper.updateById(location);
+//        }
 
         // 9. 任务状态=Finished
         task.setSourceLocationId(location != null ? location.getLocationId() : null);

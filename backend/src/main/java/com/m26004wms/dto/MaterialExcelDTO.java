@@ -3,7 +3,10 @@ package com.m26004wms.dto;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+
+/**
+ * 接收传进来的Excel表
+ */
 
 @Data
 public class MaterialExcelDTO {

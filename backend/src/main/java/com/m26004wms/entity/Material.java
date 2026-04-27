@@ -1,7 +1,9 @@
 package com.m26004wms.entity;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.m26004wms.config.BooleanToStringConverter;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -20,6 +22,7 @@ public class Material {
 
     private String spec;
 
+    @ExcelProperty(converter = BooleanToStringConverter.class)
     private Boolean isUnique;
 
     private Integer validityDate;

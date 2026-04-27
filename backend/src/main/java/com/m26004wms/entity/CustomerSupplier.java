@@ -1,11 +1,13 @@
 package com.m26004wms.entity;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.m26004wms.config.BooleanToStringConverter;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+
 
 @Data
 @TableName("customer_supplier")
@@ -33,16 +35,19 @@ public class CustomerSupplier {
     /** 电话 */
     private String phone;
 
-    /** 是否客户 */
+    @ExcelProperty(converter = BooleanToStringConverter.class)
     private Boolean isCustomer;
 
     /** 是否供应商 */
+    @ExcelProperty(converter = BooleanToStringConverter.class)
     private Boolean isSupplier;
 
     /** 是否所有者 */
+    @ExcelProperty(converter = BooleanToStringConverter.class)
     private Boolean isOwner;
 
     /** 是否删除（逻辑删除） */
+    @ExcelProperty(converter = BooleanToStringConverter.class)
     private Boolean isDeleted;
 
     /** 删除人ID */

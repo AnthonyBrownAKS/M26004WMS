@@ -62,7 +62,7 @@ public class MaterialController {
                 "attachment;filename=" + fileName + ".xlsx");
 
         EasyExcel.write(response.getOutputStream(), Material.class)
-                .sheet("物料表")
+                .sheet("物料数据")
                 .doWrite(list);
     }
 }

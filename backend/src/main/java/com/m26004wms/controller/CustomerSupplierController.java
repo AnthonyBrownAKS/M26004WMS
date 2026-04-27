@@ -66,7 +66,7 @@ public class CustomerSupplierController {
 
         // 写出Excel（直接用Entity）
         EasyExcel.write(response.getOutputStream(), CustomerSupplier.class)
-                .sheet("客商全部数据")
+                .sheet("客商数据")
                 .doWrite(list);
     }
 }
