@@ -6,13 +6,26 @@ USE yiwei;
 -- 1. 物料表 material
 -- =========================
 CREATE TABLE material (
-material_id VARCHAR(50) PRIMARY KEY COMMENT '物料ID',
-material_code VARCHAR(50) COMMENT '物料编码',
-material_name VARCHAR(255) COMMENT '物料名称',
-in_time DATETIME COMMENT '入库时间',
-out_time DATETIME COMMENT '出库时间',
-status VARCHAR(50) COMMENT '状态'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id VARCHAR(64) PRIMARY KEY COMMENT '主键ID',
+
+    code VARCHAR(64) NOT NULL COMMENT '物料编码',
+
+    short_code VARCHAR(64) DEFAULT NULL COMMENT '简码',
+
+    name VARCHAR(100) NOT NULL COMMENT '物料名称',
+
+    spec VARCHAR(100) DEFAULT NULL COMMENT '规格',
+
+    is_unique TINYINT(1) DEFAULT 0 COMMENT '是否唯一(0否1是)',
+
+    validity_date INT DEFAULT 0 COMMENT '有效期(天)',
+
+    abc_type VARCHAR(20) DEFAULT 'NONE' COMMENT 'ABC分类',
+
+    safety_stock INT DEFAULT 0 COMMENT '安全库存',
+
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='物料表';
 
 -- =========================
 -- 2. 容器表 container

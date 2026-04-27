@@ -17,7 +17,7 @@ public class TaskController {
 
     /**
      * 创建入库任务
-     * 扫码拥有 materialId, quantity, containerId
+     * 扫码拥有 materialId, quantity, containerId, code
      * 未扫码拥有 materialId， quantity
      */
     @PostMapping("/inbound")

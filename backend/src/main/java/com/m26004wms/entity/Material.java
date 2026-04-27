@@ -9,17 +9,24 @@ import java.time.LocalDateTime;
 @TableName("material")
 public class Material {
 
-    @TableId("material_id")
-    private String materialId;
+    @TableId("id")
+    private String id;
 
-    private String materialCode;
+    private String code;
 
-    private String materialName;
+    private String shortCode;
 
-    private LocalDateTime inTime;
+    private String name;
 
-    private LocalDateTime outTime;
+    private String spec;
 
-    private String status;
+    private Boolean isUnique;
 
+    private Integer validityDate;
+
+    private String abcType;
+
+    private Integer safetyStock;
+
+    private LocalDateTime creationTime;
 }

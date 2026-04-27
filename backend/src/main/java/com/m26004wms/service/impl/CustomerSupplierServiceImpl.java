@@ -12,8 +12,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static java.time.LocalDateTime.parse;
-
 @Service
 public class CustomerSupplierServiceImpl
         extends ServiceImpl<CustomerSupplierMapper, CustomerSupplier>
@@ -71,7 +69,7 @@ public class CustomerSupplierServiceImpl
             e.setConcurrencyStamp(dto.getConcurrencyStamp());
 
             // =========================
-            // ⭐ 核心：判断是否存在
+            // 判断是否存在
             // =========================
             CustomerSupplier exist = this.lambdaQuery()
                     .eq(CustomerSupplier::getCode, dto.getCode())
@@ -79,13 +77,13 @@ public class CustomerSupplierServiceImpl
 
             if (exist != null) {
 
-                // 👉 更新
+                // 更新
                 e.setId(exist.getId());
                 this.updateById(e);
 
             } else {
 
-                // 👉 新增
+                // 新增
                 this.save(e);
             }
             return e;
