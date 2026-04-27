@@ -72,6 +72,53 @@ time DATETIME COMMENT '记录时间',
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+-- ==============================
+-- EXTRA 客商表 customer_supplier
+-- ==============================
+CREATE TABLE customer_supplier (
+                                   id VARCHAR(64) PRIMARY KEY COMMENT '主键ID（UUID/String）',
+
+                                   warehouse_id VARCHAR(64) NOT NULL COMMENT '所属仓库ID',
+
+                                   name VARCHAR(100) NOT NULL COMMENT '名称',
+
+                                   code VARCHAR(50) NOT NULL COMMENT '编码',
+
+                                   address VARCHAR(255) DEFAULT NULL COMMENT '地址',
+
+                                   email VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
+
+                                   phone VARCHAR(20) DEFAULT NULL COMMENT '电话',
+
+                                   is_customer TINYINT(1) DEFAULT 0 COMMENT '是否客户(0否1是)',
+
+                                   is_supplier TINYINT(1) DEFAULT 0 COMMENT '是否供应商(0否1是)',
+
+                                   is_owner TINYINT(1) DEFAULT 0 COMMENT '是否所有者(0否1是)',
+
+                                   is_deleted TINYINT(1) DEFAULT 0 COMMENT '逻辑删除(0未删1已删)',
+
+                                   deleter_id VARCHAR(64) DEFAULT NULL COMMENT '删除人ID',
+
+                                   deletion_time DATETIME DEFAULT NULL COMMENT '删除时间',
+
+                                   last_modification_time DATETIME DEFAULT NULL COMMENT '最后修改时间',
+
+                                   last_modifier_id VARCHAR(64) DEFAULT NULL COMMENT '最后修改人ID',
+
+                                   creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+                                   creator_id VARCHAR(64) DEFAULT NULL COMMENT '创建人ID',
+
+                                   extra_properties TEXT COMMENT '扩展字段(JSON)',
+
+                                   concurrency_stamp VARCHAR(64) DEFAULT NULL COMMENT '并发控制标识'
+
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客商表';
+
+
 -- =========================
 -- 6. 初始建表数据 init_data
 -- =========================

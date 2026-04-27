@@ -67,7 +67,6 @@ public class TaskServiceImpl implements TaskService {
 
         // 任务进入队列
         taskQueue.addTask(task);
-
         taskMapper.insert(task);
         return task.getTaskId();
     }

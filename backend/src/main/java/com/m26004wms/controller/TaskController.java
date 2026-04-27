@@ -17,6 +17,8 @@ public class TaskController {
 
     /**
      * 创建入库任务
+     * 扫码拥有 materialId, quantity, containerId
+     * 未扫码拥有 materialId， quantity
      */
     @PostMapping("/inbound")
     public Result<String> createInbound(@RequestParam String materialId, @RequestParam int quantity) {
