@@ -1,5 +1,6 @@
 package com.m26004wms.service;
 
+import com.m26004wms.entity.Scan;
 import com.m26004wms.entity.Task;
 
 import java.util.List;
@@ -9,12 +10,17 @@ public interface TaskService {
     /**
      * 创建入库任务
      */
-    String createInboundTask(String materialId, int quantity);
+    String createInboundTask(Scan scan);
 
     /**
      * 创建出库任务
      */
     String createOutboundTask(String containerId);
+
+    /**
+     * 创建扫码任务
+     */
+    Scan createScanQRTask();
 
     /**
      * 执行任务 (任务队列)
@@ -35,5 +41,8 @@ public interface TaskService {
      * 分页显示
      */
     Object pageTasks(int current, int size);
+
+
+
 
 }

@@ -32,17 +32,23 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private TaskQueue taskQueue;
 
+    @Autowired
+    private MaterialMapper materialMapper;
+
     /**
      * 创建入库任务
      */
     @Override
-    public String createInboundTask(String materialId, int quantity) {
+    public String createInboundTask(Scan scan) {
         // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
         task.setTaskType("IN");
         task.setStatus("CREATED");
-        task.setMaterialId(materialId);
+
+        // 绑定物料与容器
+        task.setMaterialId(scan.getMaterialId());
+        task.setContainerId(scan.getContainerId());
         task.setCreateTime(LocalDateTime.now());
 
         // 任务进入队列
@@ -69,6 +75,21 @@ public class TaskServiceImpl implements TaskService {
         taskQueue.addTask(task);
         taskMapper.insert(task);
         return task.getTaskId();
+    }
+
+    /**
+     * 创建扫码任务
+     */
+    @Override
+    public Scan createScanQRTask() {
+
+        // WCS流程,扫码获取数据
+        // sacn:
+
+
+
+
+        return new Scan();
     }
 
 
@@ -120,16 +141,11 @@ public class TaskServiceImpl implements TaskService {
         // 1. 找空库位
         Location location = locationMapper.selectEmptyLocationForUpdate();
 
-        // 2. 找空容器
-        Container container = containerMapper.selectEmptyContainerForUpdate();
+        // 2. 绑定容器
+        Container container = containerMapper.selectById(task.getContainerId());
+        Material material = materialMapper.selectById(task.getMaterialId());
 
-        // ERROR:异常处理
-        if (container == null || location == null) {
-            failTask(task, "无可用容器或库位");
-            return;
-        }
 
-        // 3. 绑定资源
         // 状态锁
 //        container.setMaterialId(task.getMaterialId());
 //        container.setStatus("LOCKED");
@@ -212,7 +228,7 @@ public class TaskServiceImpl implements TaskService {
 //        }
 
         // 9. 任务状态=Finished
-        task.setSourceLocationId(location != null ? location.getLocationId() : null);
+        task.setSourceLocationId(location != null ? location.getId() : null);
         finishTask(task, "出库完成");
     }
 

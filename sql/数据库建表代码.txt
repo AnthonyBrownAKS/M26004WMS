@@ -24,7 +24,9 @@ CREATE TABLE material (
 
     safety_stock INT DEFAULT 0 COMMENT '安全库存',
 
-    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    container_id VARCHAR(64) COMMENT '容器ID'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='物料表';
 
 -- =========================
@@ -41,7 +43,7 @@ CREATE TABLE container (
 
     container_type_id VARCHAR(64) DEFAULT NULL COMMENT '容器类型ID',
 
-    load_state INT DEFAULT 0 COMMENT '载荷状态',
+    load_state VARCHAR(64) DEFAULT 0 COMMENT '载荷状态',
 
     location_id VARCHAR(64) DEFAULT NULL COMMENT '库位ID',
 
@@ -68,18 +70,58 @@ CREATE TABLE container (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='容器表';
 
 -- =========================
--- 3. 库位表 location
+-- 3. 库位表 warehouse_location
 -- =========================
 CREATE TABLE location (
-location_id VARCHAR(50) PRIMARY KEY COMMENT '库位ID',
-area VARCHAR(50) COMMENT '分区',
-row_no INT COMMENT '行',
-col_no INT COMMENT '列',
-level_no INT COMMENT '层',
-status VARCHAR(50) COMMENT '状态(FREE/OCCUPIED)',
-container_id VARCHAR(50) COMMENT '容器ID',
+    Id BIGINT PRIMARY KEY COMMENT '主键ID',
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    WarehouseId VARCHAR(64) NOT NULL COMMENT '仓库ID',
+    LocationAreaId VARCHAR(64) COMMENT '库区ID',
+
+    Code VARCHAR(100) NOT NULL COMMENT '库位编码',
+    ShortCode VARCHAR(50) COMMENT '短编码',
+
+    IsVirtually TINYINT(1) DEFAULT 0 COMMENT '是否虚拟库位',
+    Direction INT COMMENT '方向',
+
+    `Row` INT COMMENT '行',
+                                        `Column` INT COMMENT '列',
+    Layer INT COMMENT '层',
+    Depth INT COMMENT '深度',
+    DepthNum INT COMMENT '深度编号',
+
+    MaxFullPalletNum INT COMMENT '最大满托数量',
+    MaxEmptyPalletNum INT COMMENT '最大空托数量',
+
+    IsAllowReceipt TINYINT(1) DEFAULT 1 COMMENT '允许入库',
+    IsAllowSelect TINYINT(1) DEFAULT 1 COMMENT '允许拣选',
+
+    ReceiptMode INT COMMENT '收货模式',
+    InboundMode INT COMMENT '入库模式',
+    InboundTrigMode INT COMMENT '入库触发模式',
+
+    IsWithPallet TINYINT(1) DEFAULT 1 COMMENT '是否带托盘',
+
+    AllowInbound TINYINT(1) DEFAULT 1 COMMENT '允许入库操作',
+    AllowOutbound TINYINT(1) DEFAULT 1 COMMENT '允许出库操作',
+
+    CargoStatus INT COMMENT '货物状态',
+    LockState INT COMMENT '锁定状态',
+    LockContainerBarcode VARCHAR(100) COMMENT '锁定容器条码',
+
+    IsStocktake TINYINT(1) DEFAULT 0 COMMENT '是否盘点中',
+
+    X DECIMAL(10,2) COMMENT 'X坐标',
+    Y DECIMAL(10,2) COMMENT 'Y坐标',
+    Width DECIMAL(10,2) COMMENT '宽度',
+    Height DECIMAL(10,2) COMMENT '高度',
+
+    IsDeleted TINYINT(1) DEFAULT 0 COMMENT '是否删除',
+
+    ExtraProperties varchar(100) COMMENT '扩展属性',
+
+    ConcurrencyStamp VARCHAR(40) COMMENT '并发控制'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='库位表';
 
 -- =========================
 -- 4. 任务表 task

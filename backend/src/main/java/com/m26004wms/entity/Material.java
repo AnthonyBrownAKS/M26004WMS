@@ -32,4 +32,6 @@ public class Material {
     private Integer safetyStock;
 
     private LocalDateTime creationTime;
+
+    private String ContainerId;
 }

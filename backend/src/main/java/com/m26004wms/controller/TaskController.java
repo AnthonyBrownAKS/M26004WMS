@@ -1,5 +1,6 @@
 package com.m26004wms.controller;
 
+import com.m26004wms.entity.Scan;
 import com.m26004wms.entity.Task;
 import com.m26004wms.service.TaskService;
 import com.m26004wms.common.Result;
@@ -17,12 +18,12 @@ public class TaskController {
 
     /**
      * 创建入库任务
-     * 扫码拥有 materialId, quantity, containerId, code
-     * 未扫码拥有 materialId， quantity
+     * 传入 Scan 类
+     *
      */
     @PostMapping("/inbound")
-    public Result<String> createInbound(@RequestParam String materialId, @RequestParam int quantity) {
-        String taskId = taskService.createInboundTask(materialId, quantity);
+    public Result<String> createInbound(@RequestBody Scan scan) {
+        String taskId = taskService.createInboundTask(scan);
 
         return Result.success("入库任务创建成功", taskId);
     }
@@ -36,6 +37,18 @@ public class TaskController {
 
         return Result.success("出库任务创建成功", taskId);
     }
+
+
+    /**
+     * 创建扫码任务
+     */
+    @GetMapping("/scan")
+    public Result<Scan> scanQR(){
+
+        return Result.success("扫码数据", new Scan());
+    }
+
+
 
     /**
      * 查询任务详情
