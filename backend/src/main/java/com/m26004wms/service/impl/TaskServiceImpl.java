@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.entity.*;
 import com.m26004wms.mapper.*;
+import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.queue.TaskQueue;
 import com.m26004wms.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +37,12 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private MaterialMapper materialMapper;
 
+    @Autowired
+    private MaterialContainerMapper materialContainerMapper;
+
+    @Autowired
+    private InventoryMapper inventoryMapper;
+
     /**
      * 创建入库任务
      */
@@ -42,14 +50,30 @@ public class TaskServiceImpl implements TaskService {
     public String createInboundTask(Scan scan) {
         // 接受任务
         Task task = new Task();
+
+        // 初始化设置
         task.setTaskId(UUID.randomUUID().toString());
         task.setTaskType("IN");
         task.setStatus("CREATED");
 
-        // 绑定物料与容器
-        task.setMaterialId(scan.getMaterialId());
+        // 任务记录操作内容
+        LocalDateTime time = LocalDateTime.now();
+
+        task.setMaterialId(scan.getMaterialCode());
         task.setContainerId(scan.getContainerId());
-        task.setCreateTime(LocalDateTime.now());
+        task.setCreateTime(time);
+
+        // material_container绑定物料与容器
+        MaterialContainer mc = new MaterialContainer();
+
+        mc.setMaterialCode(scan.getMaterialCode());
+        mc.setContainerId(scan.getContainerId());
+        mc.setQuantity(scan.getQuantity());
+        mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+        mc.setCreationTime(time);
+
+        materialContainerMapper.insertOrUpdate(mc);
+
 
         // 任务进入队列
         taskQueue.addTask(task);
@@ -78,17 +102,17 @@ public class TaskServiceImpl implements TaskService {
     }
 
     /**
-     * 创建扫码任务
+     * 扫码任务
      */
     @Override
-    public Scan createScanQRTask() {
+    public Scan ScanQRTask() {
 
-        // WCS流程,扫码获取数据
-        // sacn:
-
-
+        // ======WCS流程,扫码获取数据======
+        // scan:materialCode, quantity, containerId, customerCode
 
 
+
+        // ======WCS流程=================
         return new Scan();
     }
 
@@ -138,48 +162,30 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public void handleInbound(Task task) {
 
-        // 1. 找空库位
-        Location location = locationMapper.selectEmptyLocationForUpdate();
+        // 尝试分配空库位
+        try{
+            Location location = locationMapper.selectEmptyLocation();
 
-        // 2. 绑定容器
-        Container container = containerMapper.selectById(task.getContainerId());
-        Material material = materialMapper.selectById(task.getMaterialId());
+            // ====================WCS======================
+            // 返回location_area_id, row_no, column_no给WCS层
 
 
-        // 状态锁
-//        container.setMaterialId(task.getMaterialId());
-//        container.setStatus("LOCKED");
-//        container.setLocationId(location.getLocationId());
-//        containerMapper.updateById(container);
-//
-//        location.setStatus("OCCUPIED");
-//        location.setContainerId(container.getContainerId());
-//        locationMapper.updateById(location);
-//
-//
-//        // 4.生成设备执行指令
-//
-//
-//        // 5.发送给设备控制模块
-//
-//
-//        // 6.任务状态=RUNNING
-//        task.setStatus("RUNNING");
-//
-//        // 7.等待执行结果
-//
-//
-//        // 8.执行成功？
-//
-//
-//        // 9.更新库存/容器/库位状态
-//        container.setStatus("OCCUPIED");
-//        containerMapper.updateById(container);
-//
-//        // 10.任务状态=Finished
-//        task.setContainerId(container.getContainerId());
-//        task.setTargetLocationId(location.getLocationId());
-//        finishTask(task, "入库完成");
+            // 获取location_area_id, row_no, column_no, container_id
+            // ====================WCS======================
+
+            // 插入inventory
+
+        }catch (Exception e){
+            System.out.println("没有空库位了!");
+            // 返回异常, status -1为错误
+            // ====================WCS======================
+
+
+
+
+            // ====================WCS======================
+
+        }
     }
 
     /**

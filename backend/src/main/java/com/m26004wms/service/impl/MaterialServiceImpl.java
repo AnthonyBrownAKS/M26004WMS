@@ -5,6 +5,7 @@ import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
 import com.m26004wms.mapper.MaterialMapper;
 import com.m26004wms.service.MaterialService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +19,18 @@ public class MaterialServiceImpl
         extends ServiceImpl<MaterialMapper, Material>
         implements MaterialService {
 
+
+    @Autowired
+    private MaterialMapper materialMapper;
+
     // 解决2025/5/20 07:15:36格式数据的转换
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+
+    @Override
+    public Material getMaterialById(String id) {
+        return materialMapper.selectById(id);
+    }
 
     // =========================
     // Excel导入
@@ -127,4 +137,6 @@ public class MaterialServiceImpl
 
         return LocalDateTime.parse(v, FORMATTER);
     }
+
+
 }

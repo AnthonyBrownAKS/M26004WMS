@@ -7,7 +7,13 @@ import java.util.List;
 
 public interface MaterialService {
 
+    // 通过id获取材料
+    Material getMaterialById(String id);
+
+    //
+
+
     void importExcel(List<MaterialExcelDTO> list);
 
-    public List<Material> exportAll();
+    List<Material> exportAll();
 }

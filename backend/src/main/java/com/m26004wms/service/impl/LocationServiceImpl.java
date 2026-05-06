@@ -1,7 +1,10 @@
 package com.m26004wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.m26004wms.common.QW;
 import com.m26004wms.dto.LocationExcelDTO;
+import com.m26004wms.dto.LocationQueryDTO;
 import com.m26004wms.entity.Location;
 import com.m26004wms.mapper.LocationMapper;
 import com.m26004wms.service.LocationService;
@@ -15,6 +18,24 @@ import java.util.stream.Collectors;
 public class LocationServiceImpl
         extends ServiceImpl<LocationMapper, Location>
         implements LocationService {
+
+    /**
+     * 自定义信息查询
+     *
+     */
+
+    @Override
+    public List<Location> query(LocationQueryDTO dto) {
+
+        LambdaQueryWrapper<Location> qw = new LambdaQueryWrapper<>();
+
+        QW.eq(qw, dto.getWarehouseId(), Location::getWarehouseId);
+        QW.like(qw, dto.getCode(), Location::getCode);
+        QW.eq(qw, dto.getDirection(), Location::getDirection);
+
+        return this.list(qw);
+    }
+
 
     // =========================
     // Excel导入

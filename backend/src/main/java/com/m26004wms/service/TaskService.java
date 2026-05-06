@@ -20,7 +20,7 @@ public interface TaskService {
     /**
      * 创建扫码任务
      */
-    Scan createScanQRTask();
+    Scan ScanQRTask();
 
     /**
      * 执行任务 (任务队列)

@@ -11,4 +11,7 @@ public interface LocationMapper extends BaseMapper<Location> {
     // 悲观锁
     @Select("SELECT * FROM location WHERE status = 'FREE' LIMIT 1 FOR UPDATE")
     Location selectEmptyLocationForUpdate();
+
+    @Select("SELECT * FROM location WHERE cargo_status = 'EMPTY' LIMIT 1")
+    Location selectEmptyLocation();
 }

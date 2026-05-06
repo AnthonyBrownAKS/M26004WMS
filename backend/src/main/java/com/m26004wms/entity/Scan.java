@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class Scan {
-    private String materialId;
+    private String materialCode;
     private Integer quantity;
     private String containerId;
-    private String code;
+    private String customerCode;
 }

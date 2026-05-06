@@ -44,10 +44,9 @@ public class TaskController {
      */
     @GetMapping("/scan")
     public Result<Scan> scanQR(){
-
-        return Result.success("扫码数据", new Scan());
+        Scan scan = taskService.ScanQRTask();
+        return Result.success("扫码数据", scan);
     }
-
 
 
     /**
