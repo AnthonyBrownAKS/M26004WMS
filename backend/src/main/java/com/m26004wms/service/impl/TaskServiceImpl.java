@@ -44,10 +44,19 @@ public class TaskServiceImpl implements TaskService {
     private InventoryMapper inventoryMapper;
 
     /**
-     * 创建入库任务
+     * 绑定任务
      */
     @Override
     public String createInboundTask(Scan scan) {
+
+        // 库存表提前占用
+        Inventory inventory = new Inventory();
+        inventory.setLocationAreaId("C");
+        inventory.setRowNo(1);
+        inventory.setColumnNo(1);
+        inventory.setContainerId(scan.getContainerId());
+        inventoryMapper.insertOrUpdate(inventory);
+
         // 接受任务
         Task task = new Task();
 
@@ -69,37 +78,97 @@ public class TaskServiceImpl implements TaskService {
         mc.setMaterialCode(scan.getMaterialCode());
         mc.setContainerId(scan.getContainerId());
         mc.setQuantity(scan.getQuantity());
+
+        // 批次定义
         mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         mc.setCreationTime(time);
 
         materialContainerMapper.insertOrUpdate(mc);
 
-
         // 任务进入队列
-        taskQueue.addTask(task);
-
+        // taskQueue.addTask(task);
         taskMapper.insert(task);
+
         return task.getTaskId();
     }
+
+
+    /**
+     * WCS入库接口1
+     * 分配货位
+     */
+    @Override
+    public Location getLocation(){
+        return locationMapper.selectEmptyLocation();
+    }
+
+    /**
+     * WCS入库接口2
+     * 插入库存
+     */
+    @Override
+    public String inboundFinished(Inventory inventory) {
+        // 删除占位库存
+        inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
+
+        // 插入库存
+        inventory.setCreationTime(LocalDateTime.now());
+        inventoryMapper.insert(inventory);
+
+        // 异常?
+
+        return "入库完成!";
+    }
+
 
     /**
      * 创建出库任务
      */
     @Override
-    public String createOutboundTask(String containerId) {
+    public String createOutboundTask(MaterialContainer materialContainer) {
+        // 判断是否存在重复库存
+        if (taskMapper.existsCreatedTask(materialContainer.getContainerId()) > 0){
+            return "重复创建!";
+        }
+
         // 接受任务
         Task task = new Task();
         task.setTaskId(UUID.randomUUID().toString());
         task.setTaskType("OUT");
         task.setStatus("CREATED");
-        task.setContainerId(containerId);
+        task.setContainerId(materialContainer.getContainerId());
         task.setCreateTime(LocalDateTime.now());
 
         // 任务进入队列
-        taskQueue.addTask(task);
+        // taskQueue.addTask(task);
         taskMapper.insert(task);
-        return task.getTaskId();
+        return "出库完成!";
     }
+
+    /**
+     * WCS出库接口1
+     * 获取最近出库任务
+     */
+    @Override
+    public Task getOutboundTask() {
+        return taskMapper.getEarliestCreatedTask();
+    }
+
+    /**
+     * WCS出库接口2
+     * 完成出库任务
+     */
+    @Override
+    public String finishedOutbound(String taskId, String status) {
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) return "不存在该任务";
+
+        task.setStatus("FINISHED");
+        // 删除库存表数据
+        inventoryMapper.deleteByContainerId(task.getContainerId());
+        return "出库任务完成";
+    }
+
 
     /**
      * 扫码任务
@@ -116,6 +185,16 @@ public class TaskServiceImpl implements TaskService {
         return new Scan();
     }
 
+    /**
+     * 扫码完成入库
+     */
+    @Override
+    public String scanOutbound(Scan scan) {
+
+        // 解除绑定
+        materialContainerMapper.deleteByContainerId(scan.getContainerId());
+        return "扫码入库成功";
+    }
 
     /**
      * 任务队列
@@ -125,15 +204,16 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void executeSingleTask(Task task) {
 
-        task.setExecuteTime(LocalDateTime.now());
-        taskMapper.updateById(task);
+        // ======线程池闲置中======
 
-        if ("IN".equals(task.getTaskType())) {
-            handleInbound(task);
-        } else {
-            handleOutbound(task);
-        }
-
+//        task.setExecuteTime(LocalDateTime.now());
+//        taskMapper.updateById(task);
+//
+//        if ("IN".equals(task.getTaskType())) {
+//            handleInbound(task);
+//        } else {
+//            handleOutbound(task);
+//        }
     }
 
 
@@ -160,33 +240,18 @@ public class TaskServiceImpl implements TaskService {
      * 事务处理
      */
     @Transactional
-    public void handleInbound(Task task) {
-
+    @Override
+    public Location handleInbound(Task task) {
         // 尝试分配空库位
-        try{
-            Location location = locationMapper.selectEmptyLocation();
+        Location location = locationMapper.selectEmptyLocation();
 
-            // ====================WCS======================
-            // 返回location_area_id, row_no, column_no给WCS层
-
-
-            // 获取location_area_id, row_no, column_no, container_id
-            // ====================WCS======================
-
-            // 插入inventory
-
-        }catch (Exception e){
-            System.out.println("没有空库位了!");
-            // 返回异常, status -1为错误
-            // ====================WCS======================
-
-
-
-
-            // ====================WCS======================
-
-        }
+        // ====================WCS======================
+        // 返回location_area_id, row_no, column_no给WCS层
+        return location;
     }
+
+
+
 
     /**
      * 出库处理

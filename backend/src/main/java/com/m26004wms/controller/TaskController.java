@@ -1,7 +1,6 @@
 package com.m26004wms.controller;
 
-import com.m26004wms.entity.Scan;
-import com.m26004wms.entity.Task;
+import com.m26004wms.entity.*;
 import com.m26004wms.service.TaskService;
 import com.m26004wms.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,26 +16,48 @@ public class TaskController {
     private TaskService taskService;
 
     /**
-     * 创建入库任务
-     * 传入 Scan 类
-     *
+     * 绑定程序
+     * 传入 Scan 类 materialCode, quantity, containerId, customerCode
      */
     @PostMapping("/inbound")
     public Result<String> createInbound(@RequestBody Scan scan) {
-        String taskId = taskService.createInboundTask(scan);
+        String message = taskService.createInboundTask(scan);
 
-        return Result.success("入库任务创建成功", taskId);
+        return Result.success("入库绑定成功", message);
+    }
+
+    /**
+     * WCS接口1
+     * 分配库位
+     */
+    @GetMapping("/getLocation")
+    public Result<Location> getLocation(){
+        Location location = taskService.getLocation();
+        if (location == null) return Result.fail("货位没有空位!");
+        return Result.success(location);
+    }
+
+    /**
+     * WCS接口2
+     * 分配库位
+     * 传入值命名规范: locationAreaId, rowNo, columnNo, containerId
+     */
+    @PostMapping("/finished")
+    public Result<String> taskFinished(@RequestBody Inventory inventory){
+        return Result.success(taskService.inboundFinished(inventory));
     }
 
     /**
      * 创建出库任务
      */
     @PostMapping("/outbound")
-    public Result<String> createOutbound(@RequestParam String containerId) {
-        String taskId = taskService.createOutboundTask(containerId);
-
-        return Result.success("出库任务创建成功", taskId);
+    public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
+        String message = taskService.createOutboundTask(mc);
+        return Result.success(message);
     }
+
+
+
 
 
     /**
@@ -78,5 +99,7 @@ public class TaskController {
         return Result.success("分页查询成功",
                 taskService.pageTasks(current, size));
     }
+
+
 }
 
