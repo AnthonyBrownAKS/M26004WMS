@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.m26004wms.entity.Inventory;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 public interface InventoryMapper extends BaseMapper<Inventory> {
 
@@ -26,5 +27,13 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
         WHERE container_id = #{containerId}
     """)
     int deleteByContainerId(@Param("containerId") String containerId);
+
+    @Select("""
+        SELECT location_area_id
+        FROM inventory
+        WHERE container_id = #{containerId}
+        LIMIT 1
+    """)
+    String getLocationAreaIdByContainerId(@Param("containerId") String containerId);
 
 }

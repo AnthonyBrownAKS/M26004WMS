@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @TableName("material_container")
 public class MaterialContainer {
     private String materialCode;
-    private String ContainerId;
+    private String containerId;
     private Integer quantity;
     private String batch;
     private LocalDateTime creationTime;

@@ -46,50 +46,55 @@ public class TaskServiceImpl implements TaskService {
     /**
      * 绑定任务
      */
+    @Transactional
     @Override
     public String createInboundTask(Scan scan) {
 
-        // 库存表提前占用
-        Inventory inventory = new Inventory();
-        inventory.setLocationAreaId("C");
-        inventory.setRowNo(1);
-        inventory.setColumnNo(1);
-        inventory.setContainerId(scan.getContainerId());
-        inventoryMapper.insertOrUpdate(inventory);
+        try{
+            // 库存表提前占用
+            Inventory inventory = new Inventory();
+            inventory.setLocationAreaId("C");
+            inventory.setRowNo(1);
+            inventory.setColumnNo(1);
+            inventory.setContainerId(scan.getContainerId());
+            inventoryMapper.insertOrUpdate(inventory);
 
-        // 接受任务
-        Task task = new Task();
+            // 接受任务
+            Task task = new Task();
 
-        // 初始化设置
-        task.setTaskId(UUID.randomUUID().toString());
-        task.setTaskType("IN");
-        task.setStatus("CREATED");
+            // 初始化设置
+            task.setTaskId(UUID.randomUUID().toString());
+            task.setTaskType("IN");
+            task.setStatus("CREATED");
 
-        // 任务记录操作内容
-        LocalDateTime time = LocalDateTime.now();
+            // 任务记录操作内容
+            LocalDateTime time = LocalDateTime.now();
 
-        task.setMaterialId(scan.getMaterialCode());
-        task.setContainerId(scan.getContainerId());
-        task.setCreateTime(time);
+            task.setMaterialId(scan.getMaterialCode());
+            task.setContainerId(scan.getContainerId());
+            task.setCreateTime(time);
 
-        // material_container绑定物料与容器
-        MaterialContainer mc = new MaterialContainer();
+            // material_container绑定物料与容器
+            MaterialContainer mc = new MaterialContainer();
 
-        mc.setMaterialCode(scan.getMaterialCode());
-        mc.setContainerId(scan.getContainerId());
-        mc.setQuantity(scan.getQuantity());
+            mc.setMaterialCode(scan.getMaterialCode());
+            mc.setContainerId(scan.getContainerId());
+            mc.setQuantity(scan.getQuantity());
 
-        // 批次定义
-        mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
-        mc.setCreationTime(time);
+            // 批次定义
+            mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+            mc.setCreationTime(time);
 
-        materialContainerMapper.insertOrUpdate(mc);
+            materialContainerMapper.insertOrUpdate(mc);
 
-        // 任务进入队列
-        // taskQueue.addTask(task);
-        taskMapper.insert(task);
+            // 任务进入队列
+            // taskQueue.addTask(task);
+            taskMapper.insert(task);
 
-        return task.getTaskId();
+            return task.getTaskId();
+        }catch (Exception e){
+            return null;
+        }
     }
 
 
@@ -104,16 +109,34 @@ public class TaskServiceImpl implements TaskService {
 
     /**
      * WCS入库接口2
-     * 插入库存
+     * 完成入库
      */
     @Override
     public String inboundFinished(Inventory inventory) {
         // 删除占位库存
-        inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
+        try{
+            inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
+        }catch (Exception e){
+            return "没有占位数据:" + e;
+        }
 
         // 插入库存
         inventory.setCreationTime(LocalDateTime.now());
         inventoryMapper.insert(inventory);
+
+        // 任务更新
+        Task task = taskMapper.selectCreatedTaskByContainerId(inventory.getContainerId());
+        task.setTargetLocationId(inventory.getLocationAreaId());
+        task.setFinishTime(LocalDateTime.now());
+        task.setStatus("FINISHED");
+        taskMapper.updateById(task);
+
+        // 库位表更新
+        Location location = locationMapper.selectById(inventory.getLocationId());
+        location.setCargoStatus("FULL");
+        location.setLockState("INBOUND_LOCK");
+        location.setLockContainerBarcode(inventory.getContainerId());
+        locationMapper.updateById(location);
 
         // 异常?
 
@@ -128,21 +151,28 @@ public class TaskServiceImpl implements TaskService {
     public String createOutboundTask(MaterialContainer materialContainer) {
         // 判断是否存在重复库存
         if (taskMapper.existsCreatedTask(materialContainer.getContainerId()) > 0){
-            return "重复创建!";
+            return null;
         }
 
         // 接受任务
         Task task = new Task();
-        task.setTaskId(UUID.randomUUID().toString());
+
+        String containerId = materialContainer.getContainerId();
+        // 设置原位置
+        task.setSourceLocationId(inventoryMapper.getLocationAreaIdByContainerId(containerId));
+
+        String id = UUID.randomUUID().toString();
+        task.setTaskId(id);
         task.setTaskType("OUT");
         task.setStatus("CREATED");
         task.setContainerId(materialContainer.getContainerId());
+        task.setMaterialId(materialContainer.getMaterialCode());
         task.setCreateTime(LocalDateTime.now());
 
         // 任务进入队列
         // taskQueue.addTask(task);
         taskMapper.insert(task);
-        return "出库完成!";
+        return id;
     }
 
     /**
@@ -161,9 +191,12 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public String finishedOutbound(String taskId, String status) {
         Task task = taskMapper.selectById(taskId);
-        if (task == null) return "不存在该任务";
+        if (task == null) return null;
 
         task.setStatus("FINISHED");
+        task.setFinishTime(LocalDateTime.now());
+        taskMapper.updateById(task);
+
         // 删除库存表数据
         inventoryMapper.deleteByContainerId(task.getContainerId());
         return "出库任务完成";
@@ -186,14 +219,13 @@ public class TaskServiceImpl implements TaskService {
     }
 
     /**
-     * 扫码完成入库
+     * 扫码完成出库
      */
     @Override
     public String scanOutbound(Scan scan) {
-
         // 解除绑定
         materialContainerMapper.deleteByContainerId(scan.getContainerId());
-        return "扫码入库成功";
+        return "扫码出库成功";
     }
 
     /**

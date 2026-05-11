@@ -16,19 +16,20 @@ public class TaskController {
     private TaskService taskService;
 
     /**
-     * 绑定程序
+     * 绑定程序√
      * 传入 Scan 类 materialCode, quantity, containerId, customerCode
      */
     @PostMapping("/inbound")
     public Result<String> createInbound(@RequestBody Scan scan) {
-        String message = taskService.createInboundTask(scan);
 
-        return Result.success("入库绑定成功", message);
+        String message = taskService.createInboundTask(scan);
+        if (message == null) return Result.fail("入库失败");
+        return Result.success(message);
     }
 
     /**
      * WCS接口1
-     * 分配库位
+     * 分配库位√
      */
     @GetMapping("/getLocation")
     public Result<Location> getLocation(){
@@ -39,26 +40,47 @@ public class TaskController {
 
     /**
      * WCS接口2
-     * 分配库位
-     * 传入值命名规范: locationAreaId, rowNo, columnNo, containerId
+     * 分配库位√
+     * 传入值命名规范: locationAreaId, rowNo, columnNo, containerId, locationId
      */
-    @PostMapping("/finished")
+    @PostMapping("/finishedInbound")
     public Result<String> taskFinished(@RequestBody Inventory inventory){
         return Result.success(taskService.inboundFinished(inventory));
     }
 
     /**
      * 创建出库任务
+     * 传入值: materialCode, batch, containerId
      */
     @PostMapping("/outbound")
     public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
         String message = taskService.createOutboundTask(mc);
+        if (message == null) return Result.fail("存在入库任务或重复创建!");
         return Result.success(message);
     }
 
 
+    /**
+     * WCS接口1
+     * 获取出库任务
+     */
+    @GetMapping("/getTask")
+    public Result<Task> getTask(){
+        Task task = taskService.getOutboundTask();
+        return Result.success(task);
+    }
 
-
+    /**
+     * WCS接口2
+     * 出库完成
+     * 传入参数: 任务id, status
+     */
+    @PostMapping("/finishedOutbound")
+    public Result<String> finishedOutbound(@RequestParam String id, @RequestParam String status){
+        String message = taskService.finishedOutbound(id, status);
+        if (message == null) return Result.fail("任务ID无效");
+        return Result.success(message);
+    }
 
     /**
      * 创建扫码任务

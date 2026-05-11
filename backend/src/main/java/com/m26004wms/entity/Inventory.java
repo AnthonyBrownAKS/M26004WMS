@@ -1,5 +1,6 @@
 package com.m26004wms.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -13,8 +14,10 @@ public class Inventory {
     private Integer id;
 
     private String locationAreaId;
+
     private Integer rowNo;
     private Integer columnNo;
     private String containerId;
     private LocalDateTime creationTime;
+    private String locationId;
 }

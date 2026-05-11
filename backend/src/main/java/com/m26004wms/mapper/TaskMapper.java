@@ -20,6 +20,17 @@ public interface TaskMapper extends BaseMapper<Task> {
     """)
     Long existsCreatedTask(@Param("containerId") String containerId);
 
+    /**
+     * 获取指定containerId的入库任务
+     */
+    @Select("""
+        select *
+        from task
+        where status = 'CREATED'
+        and container_id = #{containerId}
+        limit 1
+    """)
+    Task selectCreatedTaskByContainerId(String containerId);
 
     /**
      * 获取 create_time 最早的 CREATED 任务
