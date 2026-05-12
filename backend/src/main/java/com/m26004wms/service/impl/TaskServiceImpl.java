@@ -213,13 +213,17 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Scan ScanQRTask() {
 
+        Scan scan = new Scan();
+        MaterialContainer mc = materialContainerMapper.selectById(1);
         // ======WCS流程,扫码获取数据======
         // scan:materialCode, quantity, containerId, customerCode
-
-
+        scan.setMaterialCode(mc.getMaterialCode());
+        scan.setQuantity(mc.getQuantity());
+        scan.setContainerId(mc.getContainerId());
+        scan.setCustomerCode(mc.getCustomerCode());
 
         // ======WCS流程=================
-        return new Scan();
+        return scan;
     }
 
     /**

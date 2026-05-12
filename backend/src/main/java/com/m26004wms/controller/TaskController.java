@@ -84,12 +84,12 @@ public class TaskController {
 
     /**
      * 创建扫码任务
-     * 返回
+     * 轮询扫码结果
      */
     @GetMapping("/scan")
     public Result<Scan> scanQR(){
         Scan scan = taskService.ScanQRTask();
-        return Result.success("扫码数据", scan);
+        return Result.success(scan);
     }
 
 
