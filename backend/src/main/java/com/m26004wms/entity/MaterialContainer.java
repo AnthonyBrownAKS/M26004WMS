@@ -14,6 +14,7 @@ public class MaterialContainer {
     private Integer quantity;
     private String batch;
     private LocalDateTime creationTime;
+    private String customerCode;
 
     @TableId("id")
     private Integer id;

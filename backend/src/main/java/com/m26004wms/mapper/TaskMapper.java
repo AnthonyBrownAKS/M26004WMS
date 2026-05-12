@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface TaskMapper extends BaseMapper<Task> {
 
@@ -43,4 +45,68 @@ public interface TaskMapper extends BaseMapper<Task> {
         LIMIT 1
     """)
     Task getEarliestCreatedTask();
+
+    /**
+     * 分页查询
+     */
+    @Select("""
+
+            select *
+
+            from task
+
+            where
+
+            (
+                #{searchContainerId} is null
+                or
+                #{searchContainerId} = ''
+                or
+                container_id like concat('%', #{searchContainerId}, '%')
+            )
+
+            order by create_time desc
+
+            limit #{offset}, #{size}
+
+            """)
+    List<Task> selectPage(
+
+            @Param("offset")
+            int offset,
+
+            @Param("size")
+            int size,
+
+            @Param("searchContainerId")
+            String searchContainerId
+
+    );
+
+    /**
+     * 查询总数
+     */
+    @Select("""
+
+            select count(*)
+
+            from task
+
+            where
+
+            (
+                #{searchContainerId} is null
+                or
+                #{searchContainerId} = ''
+                or
+                container_id like concat('%', #{searchContainerId}, '%')
+            )
+
+            """)
+    Long selectCount(
+
+            @Param("searchContainerId")
+            String searchContainerId
+
+    );
 }

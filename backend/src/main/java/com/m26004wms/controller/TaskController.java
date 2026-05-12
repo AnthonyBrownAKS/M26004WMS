@@ -84,6 +84,7 @@ public class TaskController {
 
     /**
      * 创建扫码任务
+     * 返回
      */
     @GetMapping("/scan")
     public Result<Scan> scanQR(){
@@ -116,10 +117,11 @@ public class TaskController {
     @GetMapping("/page")
     public Result<Object> page(
             @RequestParam(defaultValue = "1") int current,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String containerId) {
 
         return Result.success("分页查询成功",
-                taskService.pageTasks(current, size));
+                taskService.pageTasks(current, size, containerId));
     }
 
 

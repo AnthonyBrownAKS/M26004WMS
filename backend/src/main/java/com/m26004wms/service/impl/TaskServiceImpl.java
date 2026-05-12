@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -57,6 +59,7 @@ public class TaskServiceImpl implements TaskService {
             inventory.setRowNo(1);
             inventory.setColumnNo(1);
             inventory.setContainerId(scan.getContainerId());
+            inventory.setCreationTime(LocalDateTime.now());
             inventoryMapper.insertOrUpdate(inventory);
 
             // 接受任务
@@ -80,6 +83,7 @@ public class TaskServiceImpl implements TaskService {
             mc.setMaterialCode(scan.getMaterialCode());
             mc.setContainerId(scan.getContainerId());
             mc.setQuantity(scan.getQuantity());
+            mc.setCustomerCode(scan.getCustomerCode());
 
             // 批次定义
             mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
@@ -260,11 +264,62 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.selectList(null);
     }
 
-
+    // 分页
     @Override
-    public IPage<Task> pageTasks(int current, int size) {
-        Page<Task> page = new Page<>(current, size);
-        return taskMapper.selectPage(page, null);
+    public Object pageTasks(
+
+            int current,
+
+            int size,
+
+            String searchContainerId
+
+    ) {
+
+        // 计算跳过多少条
+
+        int offset =
+                (current - 1) * size;
+
+        // 查询数据
+
+        List<Task> records =
+
+                taskMapper.selectPage(
+                        offset,
+                        size,
+                        searchContainerId
+                );
+
+        // 查询总数
+
+        Long total =
+
+                taskMapper.selectCount(
+                        searchContainerId
+                );
+
+        // 总页数
+
+        long pages =
+                (total + size - 1) / size;
+
+        // 返回结构
+
+        Map<String, Object> result =
+                new HashMap<>();
+
+        result.put("records", records);
+
+        result.put("current", current);
+
+        result.put("pages", pages);
+
+        result.put("size", size);
+
+        result.put("total", total);
+
+        return result;
     }
 
     /**

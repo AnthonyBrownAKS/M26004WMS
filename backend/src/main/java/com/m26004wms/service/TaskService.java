@@ -70,7 +70,7 @@ public interface TaskService {
     /**
      * 分页显示
      */
-    Object pageTasks(int current, int size);
+    Object pageTasks(int current, int size, String searchContainerId);
 
     /**
      * 入库处理
