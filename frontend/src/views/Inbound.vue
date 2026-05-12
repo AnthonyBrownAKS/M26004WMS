@@ -2,12 +2,12 @@
 
   <div class="inbound-page">
 
-    <!-- 库存列表 -->
+    <!-- 入库记录 -->
 
     <div class="card">
 
       <div class="card-title">
-        库存列表
+        入库记录
       </div>
 
       <table class="inventory-table">
@@ -15,45 +15,57 @@
         <thead>
 
         <tr>
-          <th>库区</th>
-          <th>排</th>
-          <th>列</th>
+
+          <th>物料编码</th>
+
           <th>容器ID</th>
-          <th>创建时间</th>
+
+          <th>批次号</th>
+
+          <th>供应商</th>
+
+          <th>数量</th>
+
+          <th>任务创建时间</th>
+
         </tr>
 
         </thead>
 
         <tbody>
 
-        <!-- 数据行 -->
-
         <tr
-            v-for="item in inventoryList"
-            :key="item.containerId"
+            v-for="item in inboundList"
+            :key="item.id"
         >
-          <td>{{ item.locationAreaId }}</td>
 
-          <td>{{ item.rowNo }}</td>
-
-          <td>{{ item.columnNo }}</td>
+          <td>{{ item.materialCode }}</td>
 
           <td>{{ item.containerId }}</td>
 
+          <td>{{ item.batch }}</td>
+
+          <td>{{ item.customerCode }}</td>
+
+          <td>{{ item.quantity }}</td>
+
           <td>{{ formatTime(item.creationTime) }}</td>
+
         </tr>
 
         <!-- 补空行 -->
 
         <tr
-            v-for="n in (5 - inventoryList.length)"
+            v-for="n in (5 - inboundList.length)"
             :key="'empty-' + n"
         >
+
           <td>&nbsp;</td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
+
         </tr>
 
         </tbody>
@@ -100,6 +112,8 @@
 
       <div class="form-grid">
 
+        <!-- 物料编码 -->
+
         <div class="form-item">
 
           <label>
@@ -107,12 +121,17 @@
           </label>
 
           <input
+              id="materialInput"
               v-model="form.materialCode"
-              placeholder="请输入物料编码"
-              style="color: #2e303a"
+              placeholder="扫码或输入物料编码"
+              @keydown.enter.prevent="
+                focusById('quantityInput')
+              "
           />
 
         </div>
+
+        <!-- 数量 -->
 
         <div class="form-item">
 
@@ -121,13 +140,18 @@
           </label>
 
           <input
+              id="quantityInput"
               type="number"
               v-model="form.quantity"
               placeholder="请输入数量"
-              style="color: #2e303a"
+              @keydown.enter.prevent="
+                focusById('containerInput')
+              "
           />
 
         </div>
+
+        <!-- 容器 -->
 
         <div class="form-item">
 
@@ -136,12 +160,18 @@
           </label>
 
           <input
-              v-model="form.containerId"
-              placeholder="请输入容器ID"
-              style="color: #2e303a"
+              id="containerInput"
+              :value="form.containerId"
+              @input="form.containerId = $event.target.value.toUpperCase()"
+              placeholder="扫码或输入容器ID"
+              @keydown.enter.prevent="
+                focusById('customerInput')
+              "
           />
 
         </div>
+
+        <!-- 客商 -->
 
         <div class="form-item">
 
@@ -150,9 +180,12 @@
           </label>
 
           <input
+              id="customerInput"
               v-model="form.customerCode"
               placeholder="请输入客商编码"
-              style="color: #2e303a"
+              @keydown.enter.prevent="
+                submitInbound
+              "
           />
 
         </div>
@@ -165,9 +198,16 @@
 
         <button
             class="scan-btn"
-            @click="goScanPage"
+            @click="focusScan"
         >
           扫一扫
+        </button>
+
+        <button
+            class="reset-btn"
+            @click="resetForm"
+        >
+          重置
         </button>
 
         <button
@@ -188,14 +228,17 @@
 <script setup>
 
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
+import {
+  onMounted,
+  ref,
+  nextTick,
+  inject
+} from 'vue'
 
-/* 库存数据 */
+/* 入库记录 */
 
-const inventoryList = ref([])
+const inboundList = ref([])
 
 const current = ref(1)
 
@@ -205,13 +248,17 @@ const total = ref(0)
 
 const size = ref(5)
 
+// 提示弹窗
+const showMessage =
+    inject('showMessage')
+
 /* 表单 */
 
 const form = ref({
 
   materialCode: '',
 
-  quantity: 0,
+  quantity: '',
 
   containerId: '',
 
@@ -219,15 +266,42 @@ const form = ref({
 
 })
 
-/* 加载库存分页 */
+/* 聚焦指定ID */
 
-const loadInventory = async () => {
+const focusById = async (id) => {
+
+  await nextTick()
+
+  const el =
+      document.getElementById(id)
+
+  if (el) {
+
+    el.focus()
+
+    el.select?.()
+
+  }
+
+}
+
+/* 扫一扫 */
+
+const focusScan = () => {
+
+  focusById('materialInput')
+
+}
+
+/* 加载记录 */
+
+const loadInboundList = async () => {
 
   try {
 
     const res = await axios.get(
 
-        '/api/inventory/pages',
+        '/api/material/inbound',
 
         {
 
@@ -243,21 +317,28 @@ const loadInventory = async () => {
 
     )
 
-    console.log(res.data)
+    const data = res.data.data
 
-    inventoryList.value = res.data.records || []
+    inboundList.value =
+        data || []
 
-    current.value = res.data.current || 1
+    current.value =
+        data.current || 1
 
-    pages.value = res.data.pages || 1
+    pages.value =
+        data.pages || 1
 
-    total.value = res.data.total || 0
+    total.value =
+        data.total || 0
 
   } catch (e) {
 
     console.error(e)
 
-    alert('库存数据加载失败')
+    showMessage(
+        '入库记录加载失败',
+        'error'
+    )
 
   }
 
@@ -269,19 +350,12 @@ const changePage = (page) => {
 
   current.value = page
 
-  loadInventory()
+  loadInboundList()
 
 }
 
-/* 去扫一扫页面 */
+/* 时间格式 */
 
-const goScanPage = () => {
-
-  router.push('/scan')
-
-}
-
-/* 规范时间格式 */
 const formatTime = (time) => {
 
   if (!time) {
@@ -292,11 +366,79 @@ const formatTime = (time) => {
   return time
       .replace('T', ' ')
       .substring(0, 19)
+
 }
 
-/* 提交入库 */
+/* 提交 */
 
 const submitInbound = async () => {
+
+  /* 去除空格 */
+
+  const materialCode =
+      form.value.materialCode.trim()
+
+  const quantity =
+      String(form.value.quantity).trim()
+
+  const containerId =
+      form.value.containerId.trim()
+
+  const customerCode =
+      form.value.customerCode.trim()
+
+  /* 非空判断 */
+
+  if (
+      !materialCode ||
+      !quantity ||
+      !containerId ||
+      !customerCode
+  ) {
+
+    showMessage(
+        '所有字段不能为空',
+        'error'
+    )
+
+    return
+
+  }
+
+  /* 容器ID判断 */
+
+  if (!containerId.startsWith('PT')) {
+
+    showMessage(
+        '容器ID必须以PT开头',
+        'error'
+    )
+
+    focusById('containerInput')
+
+    return
+
+  }
+
+  /* 数量判断 */
+
+  const num = Number(quantity)
+
+  if (
+      isNaN(num) ||
+      num <= 0
+  ) {
+
+    showMessage(
+        '数量必须为正数字',
+        'error'
+    )
+
+    focusById('quantityInput')
+
+    return
+
+  }
 
   try {
 
@@ -306,29 +448,37 @@ const submitInbound = async () => {
 
         {
 
-          materialCode: form.value.materialCode,
+          materialCode,
 
-          quantity: form.value.quantity,
+          quantity: num,
 
-          containerId: form.value.containerId,
+          containerId,
 
-          customerCode: form.value.customerCode
+          customerCode
 
         }
 
     )
 
-    console.log(res.data)
-
     if (res.data.code === 200) {
 
-      alert('入库任务创建成功')
+      showMessage(
+          '入库成功',
+          'success'
+      )
 
-      loadInventory()
+      resetForm()
+
+      loadInboundList()
+
+      focusScan()
 
     } else {
 
-      alert(res.data.message || '入库失败')
+      showMessage(
+          '提交失败',
+          'error'
+      )
 
     }
 
@@ -336,7 +486,28 @@ const submitInbound = async () => {
 
     console.error(e)
 
-    alert('服务器异常')
+    showMessage(
+        '服务器异常',
+        'error'
+    )
+
+  }
+
+}
+
+/* 重置 */
+
+const resetForm = () => {
+
+  form.value = {
+
+    materialCode: '',
+
+    quantity: '',
+
+    containerId: '',
+
+    customerCode: ''
 
   }
 
@@ -346,19 +517,9 @@ const submitInbound = async () => {
 
 onMounted(() => {
 
-  loadInventory()
+  loadInboundList()
 
-  /* 接收扫一扫页面返回数据 */
-
-  const scanData = sessionStorage.getItem('scanData')
-
-  if (scanData) {
-
-    form.value = JSON.parse(scanData)
-
-    sessionStorage.removeItem('scanData')
-
-  }
+  focusScan()
 
 })
 
@@ -385,7 +546,8 @@ onMounted(() => {
 
   padding: 20px;
 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow:
+      0 2px 8px rgba(0,0,0,0.05);
 }
 
 .card-title {
@@ -421,21 +583,23 @@ onMounted(() => {
 
   font-weight: bold;
 
-  border-bottom: 1px solid #ebeef5;
+  border-bottom:
+      1px solid #ebeef5;
 }
 
 .inventory-table tbody {
 
-  height: 350px;
+  height: 320px;
 }
 
 .inventory-table td {
 
-  height: 50px;
+  height: 52px;
 
   text-align: center;
 
-  border-bottom: 1px solid #ebeef5;
+  border-bottom:
+      1px solid #ebeef5;
 
   color: #555;
 }
@@ -470,13 +634,6 @@ onMounted(() => {
   color: white;
 
   cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.pagination button:hover {
-
-  background: #2f8df7;
 }
 
 .pagination button:disabled {
@@ -497,7 +654,8 @@ onMounted(() => {
 
   display: grid;
 
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns:
+      repeat(2, 1fr);
 
   gap: 20px 40px;
 }
@@ -522,9 +680,10 @@ onMounted(() => {
 
   flex: 1;
 
-  height: 40px;
+  height: 42px;
 
-  border: 1px solid #dcdfe6;
+  border:
+      1px solid #dcdfe6;
 
   border-radius: 6px;
 
@@ -533,6 +692,8 @@ onMounted(() => {
   outline: none;
 
   background: #f5f7fb;
+
+  color: #2e303a;
 
   transition: 0.2s;
 }
@@ -558,7 +719,8 @@ onMounted(() => {
 }
 
 .scan-btn,
-.submit-btn {
+.submit-btn,
+.reset-btn {
 
   min-width: 120px;
 
@@ -595,6 +757,16 @@ onMounted(() => {
 .submit-btn:hover {
 
   background: #2f8df7;
+}
+
+.reset-btn {
+
+  background: #909399;
+}
+
+.reset-btn:hover {
+
+  background: #7d8187;
 }
 
 </style>

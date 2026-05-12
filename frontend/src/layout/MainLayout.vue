@@ -20,14 +20,49 @@
           亿为科技(YW)
         </div>
 
-        <div class="time-area">
+        <!-- 用户区域 -->
 
-          <div class="user">
-            Administrator
+        <div
+            class="user-dropdown"
+            @mouseenter="showUserMenu = true"
+            @mouseleave="showUserMenu = false"
+        >
+
+
+
+        </div>
+
+        <!-- 时间 -->
+
+        <div class="time">
+          {{ currentTime }}
+        </div>
+
+        <div class="user-trigger">
+            <span class="gear">
+              Admin
+            </span>
+        </div>
+
+        <!-- 下拉菜单 -->
+
+        <div
+            v-show="showUserMenu"
+            class="dropdown-menu"
+        >
+
+          <div
+              class="dropdown-item"
+              @click="switchUser"
+          >
+            切换用户
           </div>
 
-          <div class="time">
-            {{ currentTime }}
+          <div
+              class="dropdown-item logout"
+              @click="logout"
+          >
+            退出登录
           </div>
 
         </div>
@@ -48,6 +83,8 @@
           功能菜单
         </div>
 
+        <!-- 入库 -->
+
         <div
             class="menu-item"
             :class="{ active: route.path === '/inbound' }"
@@ -55,6 +92,8 @@
         >
           入库页面
         </div>
+
+        <!-- 出库 -->
 
         <div
             class="menu-item"
@@ -64,12 +103,102 @@
           出库页面
         </div>
 
+        <!-- 任务 -->
+
         <div
             class="menu-item"
             :class="{ active: route.path === '/task-query' }"
             @click="go('/task-query')"
         >
-          任务查询
+          任务管理
+        </div>
+
+        <!-- 物料 -->
+
+        <div
+            class="menu-item"
+            :class="{ active: route.path === '/material' }"
+            @click="go('/material')"
+        >
+          物料管理
+        </div>
+
+        <!-- 客商 -->
+
+        <div
+            class="menu-item"
+            :class="{ active: route.path === '/customer' }"
+            @click="go('/customer')"
+        >
+          客商管理
+        </div>
+
+        <!-- 库存 -->
+
+        <div
+            class="menu-item"
+            :class="{ active: route.path === '/inventory' }"
+            @click="go('/inventory')"
+        >
+          库存管理
+        </div>
+
+        <!-- 日志管理 -->
+
+        <div class="menu-group">
+
+          <div
+              class="menu-item"
+              @click="toggleLogMenu"
+          >
+
+            <span>
+              日志管理
+            </span>
+
+            <span class="arrow">
+              {{ logMenuOpen ? '▼' : '▶' }}
+            </span>
+
+          </div>
+
+          <!-- 子菜单 -->
+
+          <div
+              v-show="logMenuOpen"
+              class="submenu"
+          >
+
+            <div
+                class="submenu-item"
+                :class="{ active: route.path === '/operation-log' }"
+                @click="go('/operation-log')"
+                style="font-size: 15px"
+            >
+              操作日志
+            </div>
+
+            <div
+                class="submenu-item"
+                :class="{ active: route.path === '/api-log' }"
+                @click="go('/api-log')"
+                style="font-size: 15px"
+            >
+              接口日志
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 系统 -->
+
+        <div
+            class="menu-item"
+            :class="{ active: route.path === '/system' }"
+            @click="go('/system')"
+        >
+          系统管理
         </div>
 
       </aside>
@@ -86,12 +215,43 @@
 
   </div>
 
+  <GlobalMessage
+      ref="globalMessageRef"
+  />
 </template>
 
 <script setup>
 
 import { useRouter, useRoute } from 'vue-router'
-import { ref, onMounted, onUnmounted } from 'vue'
+import {
+  ref,
+  onMounted,
+  onUnmounted, provide
+} from 'vue'
+
+import GlobalMessage
+  from '@/components/GlobalMessage.vue'
+
+const globalMessageRef = ref(null)
+
+const showMessage = (
+    text,
+    type = 'info'
+) => {
+
+  globalMessageRef.value.show(
+      text,
+      type
+  )
+
+}
+
+/* 全局提供 */
+
+provide(
+    'showMessage',
+    showMessage
+)
 
 const router = useRouter()
 
@@ -99,9 +259,44 @@ const route = useRoute()
 
 const currentTime = ref('')
 
+/* 用户菜单 */
+
+const showUserMenu = ref(false)
+
+/* 日志菜单 */
+
+const logMenuOpen = ref(false)
+
+/* 跳转 */
+
 const go = (path) => {
 
   router.push(path)
+
+}
+
+/* 日志菜单 */
+
+const toggleLogMenu = () => {
+
+  logMenuOpen.value =
+      !logMenuOpen.value
+
+}
+
+/* 切换用户 */
+
+const switchUser = () => {
+
+  alert('切换用户')
+
+}
+
+/* 登出 */
+
+const logout = () => {
+
+  alert('退出登录')
 
 }
 
@@ -113,15 +308,25 @@ const updateTime = () => {
 
   const year = now.getFullYear()
 
-  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const month =
+      String(now.getMonth() + 1)
+          .padStart(2, '0')
 
-  const day = String(now.getDate()).padStart(2, '0')
+  const day =
+      String(now.getDate())
+          .padStart(2, '0')
 
-  const hour = String(now.getHours()).padStart(2, '0')
+  const hour =
+      String(now.getHours())
+          .padStart(2, '0')
 
-  const minute = String(now.getMinutes()).padStart(2, '0')
+  const minute =
+      String(now.getMinutes())
+          .padStart(2, '0')
 
-  const second = String(now.getSeconds()).padStart(2, '0')
+  const second =
+      String(now.getSeconds())
+          .padStart(2, '0')
 
   currentTime.value =
       `${year}-${month}-${day} ${hour}:${minute}:${second}`
@@ -152,15 +357,18 @@ onUnmounted(() => {
 
 <style scoped>
 
-/* 全局重置 */
+/* 重置 */
 
 * {
+
   margin: 0;
+
   padding: 0;
+
   box-sizing: border-box;
 }
 
-/* 整体布局 */
+/* 主布局 */
 
 .layout {
 
@@ -181,17 +389,25 @@ onUnmounted(() => {
 
   flex-shrink: 0;
 
-  background: linear-gradient(90deg, #1677ff, #409eff);
+  background:
+      linear-gradient(
+          90deg,
+          #1677ff,
+          #409eff
+      );
 
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
 
   padding: 0 24px;
 
   color: white;
 
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow:
+      0 2px 10px rgba(0,0,0,0.1);
 }
 
 /* 左侧 */
@@ -199,6 +415,7 @@ onUnmounted(() => {
 .left-area {
 
   display: flex;
+
   align-items: center;
 }
 
@@ -223,36 +440,110 @@ onUnmounted(() => {
 }
 
 .warehouse-name {
-  font-size: 20px;
-  margin-right: 30px;
+
+  font-size: 18px;
 }
 
-.time-area {
+/* 用户菜单 */
+
+.user-dropdown {
+
+  position: relative;
+}
+
+.user-trigger {
 
   display: flex;
 
-  flex-direction: column;
+  align-items: center;
 
-  align-items: flex-end;
+  gap: 8px;
 
-  gap: 4px;
+  cursor: pointer;
+
+  padding: 6px 12px;
+
+  border-radius: 8px;
+
+  transition: 0.2s;
 }
 
-.time {
+.user-trigger:hover {
 
-  font-size: 14px;
+  background: rgba(255,255,255,0.15);
+}
 
-  font-weight: bold;
+.gear {
+
+  font-size: 18px;
 }
 
 .user {
 
-  font-size: 20px;
-
-  opacity: 0.9;
+  font-size: 18px;
 }
 
-/* 主体 */
+/* 下拉 */
+
+.dropdown-menu {
+
+  position: absolute;
+
+  top: 48px;
+
+  right: 0;
+
+  width: 140px;
+
+  background: white;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  box-shadow:
+      0 4px 12px rgba(0,0,0,0.15);
+
+  z-index: 100;
+}
+
+.dropdown-item {
+
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding-left: 16px;
+
+  color: #333;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.dropdown-item:hover {
+
+  background: #f5f7fb;
+}
+
+.logout {
+
+  color: #f56c6c;
+}
+
+/* 时间 */
+
+.time {
+
+  font-size: 15px;
+
+  font-weight: bold;
+}
+
+/* 主区域 */
 
 .main-container {
 
@@ -295,6 +586,8 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
+/* 菜单 */
+
 .menu-item {
 
   height: 52px;
@@ -303,7 +596,9 @@ onUnmounted(() => {
 
   align-items: center;
 
-  padding-left: 28px;
+  justify-content: space-between;
+
+  padding: 0 20px 0 28px;
 
   cursor: pointer;
 
@@ -330,7 +625,54 @@ onUnmounted(() => {
   font-weight: bold;
 }
 
-/* 右侧内容 */
+/* 子菜单 */
+
+.submenu {
+
+  background: #fafcff;
+}
+
+.submenu-item {
+
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding-left: 52px;
+
+  cursor: pointer;
+
+  color: #666;
+
+  transition: 0.2s;
+}
+
+.submenu-item:hover {
+
+  background: #eef5ff;
+
+  color: #1677ff;
+}
+
+.submenu-item.active {
+
+  color: #1677ff;
+
+  font-weight: bold;
+}
+
+/* 箭头 */
+
+.arrow {
+
+  font-size: 12px;
+
+  color: #999;
+}
+
+/* 内容区 */
 
 .content {
 
@@ -343,19 +685,25 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-/* 滚动条美化 */
+/* 滚动条 */
 
 ::-webkit-scrollbar {
+
   width: 8px;
+
   height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
+
+  background:
+      rgba(0,0,0,0.15);
+
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-track {
+
   background: transparent;
 }
 

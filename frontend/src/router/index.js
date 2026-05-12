@@ -1,43 +1,120 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import MainLayout
+    from '@/layout/MainLayout.vue'
 
-import MainLayout from '@/layout/MainLayout.vue'
+import Inbound
+    from '@/views/Inbound.vue'
 
-import Inbound from '@/views/Inbound.vue'
-import Outbound from '@/views/Outbound.vue'
-import TaskQuery from '@/views/TaskQuery.vue'
+import Outbound
+    from '@/views/Outbound.vue'
+
+import TaskQuery
+    from '@/views/TaskQuery.vue'
+
+import Material
+    from '@/views/Material.vue'
+
+import Customer
+    from '@/views/Customer.vue'
+
+import Inventory
+    from '@/views/Inventory.vue'
+
+import OperationLog
+    from '@/views/OperationLog.vue'
+
+import ApiLog
+    from '@/views/ApiLog.vue'
+
+import System
+    from '@/views/System.vue'
 
 const routes = [
 
     {
+
         path: '/',
+
         component: MainLayout,
+
+        redirect: '/inbound',
 
         children: [
 
             {
-                path: '',
-                redirect: '/inbound'
-            },
 
-            {
                 path: 'inbound',
-                name: 'Inbound',
+
                 component: Inbound
+
             },
 
             {
+
                 path: 'outbound',
-                name: 'Outbound',
+
                 component: Outbound
+
             },
 
             {
+
                 path: 'task-query',
-                name: 'TaskQuery',
+
                 component: TaskQuery
+
+            },
+
+            {
+
+                path: 'material',
+
+                component: Material
+
+            },
+
+            {
+
+                path: 'customer',
+
+                component: Customer
+
+            },
+
+            {
+
+                path: 'inventory',
+
+                component: Inventory
+
+            },
+
+            {
+
+                path: 'operation-log',
+
+                component: OperationLog
+
+            },
+
+            {
+
+                path: 'api-log',
+
+                component: ApiLog
+
+            },
+
+            {
+
+                path: 'system',
+
+                component: System
+
             }
 
         ]
+
     }
 
 ]

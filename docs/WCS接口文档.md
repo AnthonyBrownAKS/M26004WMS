@@ -1,7 +1,7 @@
 # WCS层调用接口
 ## 分配库位
 1. 路径：GET `http://localhost:8080/task/getLocation`
-2. 传入参数：无
+2. 传入参数：code
 3. Return：
  - code：200正常, 500异常
  - data：
@@ -47,7 +47,7 @@
 
 ## 完成入库
 1. 路径：POST `http://localhost:8080/task/finishedInbound`
-2. 传入参数:locationAreaId, rowNo, columnNo, containerId, locationId
+2. 传入参数:locationAreaId(String), rowNo(int), columnNo(int), containerId(String), locationId(String)
 3. Return:
  - code：200正常, 500异常
  - data: 无
@@ -79,7 +79,7 @@
 
 ## 完成出库
 1. 路径：POST `http://localhost:8080/task/finishedOutbound?id={taskId}&status={status}`
-2. 传入参数: 任务ID`{taskId}`,状态`{status}`
+2. 传入参数: 任务ID`{taskId}`(String),状态`{status}`(String)
 3. Return: 
  - code：200正常, 500异常
  - data: 无

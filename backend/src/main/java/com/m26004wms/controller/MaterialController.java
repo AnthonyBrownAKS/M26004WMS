@@ -4,10 +4,11 @@ import com.alibaba.excel.EasyExcel;
 import com.m26004wms.common.Result;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
+import com.m26004wms.entity.MaterialContainer;
+import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.MaterialMapper;
 import com.m26004wms.service.MaterialService;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,9 @@ public class MaterialController {
 
     @Autowired
     private MaterialMapper materialMapper;
+
+    @Autowired
+    private MaterialContainerMapper materialContainerMapper;
 
 
     public MaterialController(MaterialService service) {
@@ -108,5 +112,9 @@ public class MaterialController {
         );
     }
 
+    @GetMapping("/inbound")
+    public Result<List<MaterialContainer>> getMaterialContainer(){
+        return Result.success(materialContainerMapper.selectList(null));
+    }
 
 }

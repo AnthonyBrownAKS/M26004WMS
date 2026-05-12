@@ -32,7 +32,7 @@ public class TaskController {
      * 分配库位√
      */
     @GetMapping("/getLocation")
-    public Result<Location> getLocation(){
+    public Result<Location> getLocation(String code){
         Location location = taskService.getLocation();
         if (location == null) return Result.fail("货位没有空位!");
         return Result.success(location);
