@@ -275,9 +275,8 @@ onMounted(() => {
 
 .task-query-page {
 
-  display: flex;
+  padding: 20px;
 
-  flex-direction: column;
 }
 
 /* 卡片 */
@@ -288,7 +287,7 @@ onMounted(() => {
 
   border-radius: 10px;
 
-  padding: 20px;
+  padding: 24px;
 
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }

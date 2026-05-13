@@ -46,4 +46,24 @@ public interface MaterialMapper extends BaseMapper<Material>{
             String materialCode
 
     );
+
+    /**
+     * 通过code查询 spec, name
+     */
+    @Select("""
+
+        select *
+ 
+        from material
+
+        where code = #{materialCode}
+        
+        limit 1
+        
+        """)
+    Material getByCustomerCode(
+            @Param("materialCode")
+            String materialCode
+    );
+
 }

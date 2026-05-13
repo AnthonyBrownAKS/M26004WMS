@@ -2,9 +2,164 @@
 
   <div class="outbound-page">
 
-    <div class="card">
+    <!-- 出库记录 -->
 
-      <!-- 标题 -->
+    <div class="card table-card">
+
+      <div class="card-title">
+        出库任务列表
+      </div>
+
+      <!-- 查询区域 -->
+
+      <div class="search-bar">
+
+        <input
+            v-model="query.materialCode"
+            placeholder="物料编码"
+        >
+
+        <input
+            v-model="query.materialName"
+            placeholder="物料名称"
+        >
+
+        <input
+            v-model="query.containerId"
+            placeholder="容器ID"
+        >
+
+        <input
+            v-model="query.batch"
+            placeholder="批次"
+        >
+
+        <input
+            v-model="query.customerCode"
+            placeholder="客商编码"
+        >
+
+        <button @click="loadOutboundList">
+          查询
+        </button>
+
+      </div>
+
+      <!-- 表格 -->
+
+      <div class="table-wrapper">
+
+        <table class="inventory-table">
+
+        <thead>
+
+        <tr>
+
+          <th>物料名称</th>
+
+          <th>规格</th>
+
+          <th>容器ID</th>
+
+          <th>批次</th>
+
+          <th>客商</th>
+
+          <th>数量</th>
+
+          <th>出库时间</th>
+
+          <th>操作</th>
+
+        </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr
+            v-for="item in outboundList"
+            :key="item.id"
+        >
+
+          <td>{{ item.materialName }}</td>
+
+          <td>{{ item.spec }}</td>
+
+          <td>{{ item.containerId }}</td>
+
+          <td>{{ item.batch }}</td>
+
+          <td>{{ item.customerCode }}</td>
+
+          <td>{{ item.quantity }}</td>
+
+          <td>{{ item.outTime }}</td>
+
+          <td>
+
+            <div class="action-buttons">
+
+              <button
+                  class="table-edit-btn"
+                  @click="openEdit(item)"
+                  @mousedown.prevent
+              >
+                修改
+              </button>
+
+              <button
+                  class="table-delete-btn"
+                  @click="openDelete(item)"
+                  @mousedown.prevent
+              >
+                删除
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+        </tbody>
+
+      </table>
+      </div>
+
+      <!-- 分页 -->
+
+      <div class="pagination">
+
+        <button
+            @click="prevPage"
+            :disabled="current === 1"
+        >
+          上一页
+        </button>
+
+        <span>
+          第 {{ current }} 页
+        </span>
+
+        <button
+            @click="nextPage"
+            :disabled="current >= pages"
+        >
+          下一页
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- 间隔 -->
+
+    <div style="height: 32px"></div>
+
+    <!-- 出库 -->
+
+    <div class="card">
 
       <div class="card-title">
         出库管理
@@ -14,7 +169,7 @@
 
       <div class="form-grid">
 
-        <!-- 物料 -->
+        <!-- 发货物料 -->
 
         <div class="form-item">
 
@@ -22,26 +177,44 @@
             发货物料：
           </label>
 
-          <select
-              v-model="form.materialCode"
-              @change="handleMaterialChange"
-          >
+          <div class="custom-select">
 
-            <option value="">
-              请选择物料
-            </option>
+            <input
+                ref="materialRef"
+                v-model="form.materialCode"
+                placeholder="请输入或选择物料"
+                @focus="handleFocus"
+                @input="handleMaterialInput"
+                @keyup.enter="focusBatch"
+            />
 
-            <option
-                v-for="item in materialList"
-                :key="item.materialCode"
-                :value="item.materialCode"
+            <!-- 下拉列表 -->
+
+            <div
+                v-if="showDropdown"
+                class="dropdown"
             >
-              {{ item.materialCode }}
-              ({{ item.name }})
-              / {{ item.spec }}
-            </option>
 
-          </select>
+              <div
+                  v-for="item in filteredMaterials"
+                  :key="item.code"
+                  class="dropdown-item"
+                  @mousedown.prevent="selectMaterial(item)"
+              >
+
+                <div class="material-code">
+                  {{ item.code }}
+                </div>
+
+                <div class="material-info">
+                  {{ item.name }} / {{ item.spec }}
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -70,9 +243,11 @@
           </label>
 
           <input
+              ref="batchRef"
               v-model="form.batch"
               placeholder="请输入批次号"
               @blur="searchInventory"
+              @keyup.enter="submitOutbound"
           />
 
         </div>
@@ -116,6 +291,14 @@
       <div class="button-group">
 
         <button
+            class="scan-btn"
+            @click="focusMaterial"
+        >
+          扫一扫
+        </button>
+
+        <button
+            ref="submitRef"
             class="submit-btn"
             @click="submitOutbound"
         >
@@ -133,6 +316,165 @@
 
     </div>
 
+    <!-- 修改弹窗 -->
+
+    <div
+        v-if="editVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog industrial-dialog">
+
+        <!-- 标题 -->
+
+        <div class="dialog-header">
+
+          <div class="dialog-title">
+            修改出库记录
+          </div>
+
+        </div>
+
+        <!-- 表单 -->
+
+        <div class="dialog-form">
+
+          <!-- 物料名称 -->
+
+          <div class="dialog-item">
+
+            <label>
+              物料名称
+            </label>
+
+            <input
+                v-model="editForm.materialName"
+                placeholder="请输入物料名称"
+            >
+
+          </div>
+
+          <!-- 规格 -->
+
+          <div class="dialog-item">
+
+            <label>
+              规格型号
+            </label>
+
+            <input
+                v-model="editForm.spec"
+                placeholder="请输入规格"
+            >
+
+          </div>
+
+          <!-- 批次 -->
+
+          <div class="dialog-item">
+
+            <label>
+              批次号
+            </label>
+
+            <input
+                v-model="editForm.batch"
+                placeholder="请输入批次号"
+            >
+
+          </div>
+
+          <!-- 客商 -->
+
+          <div class="dialog-item">
+
+            <label>
+              客商编码
+            </label>
+
+            <input
+                v-model="editForm.customerCode"
+                placeholder="请输入客商编码"
+            >
+
+          </div>
+
+          <!-- 数量 -->
+
+          <div class="dialog-item">
+
+            <label>
+              出库数量
+            </label>
+
+            <input
+                v-model="editForm.quantity"
+                placeholder="请输入数量"
+            >
+
+          </div>
+
+        </div>
+
+        <!-- 按钮 -->
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="submitEdit"
+          >
+            提交修改
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="editVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 删除弹窗 -->
+
+    <div
+        v-if="deleteVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog">
+
+        <h3>
+          确认删除？
+        </h3>
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="confirmDelete"
+          >
+            确定
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="deleteVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </div>
 
 </template>
@@ -140,11 +482,92 @@
 <script setup>
 
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, nextTick, ref,
+  inject } from 'vue'
 
-/* 物料列表 */
+const showMessage =
+    inject('showMessage')
 
-const materialList = ref([])
+/* refs */
+
+const materialRef = ref()
+const batchRef = ref()
+const submitRef = ref()
+
+/* 表格 */
+
+const outboundList = ref([])
+
+const current = ref(1)
+
+const size = ref(5)
+
+const pages = ref(1)
+
+const showDropdown = ref(false)
+
+const filteredMaterials = ref([])
+
+/* 查询 */
+
+const query = ref({
+
+  materialCode: '',
+
+  materialName: '',
+
+  containerId: '',
+
+  batch: '',
+
+  customerCode: ''
+
+})
+
+const handleMaterialInput = (e) => {
+
+  // 如果是程序选择
+  // 直接跳过
+
+  if (selecting.value) {
+
+    return
+
+  }
+
+  const keyword =
+      e.target.value.toLowerCase()
+
+  form.value.code =
+      e.target.value
+
+  filteredMaterials.value =
+      materialList.value.filter(item =>
+
+          item.code
+              .toLowerCase()
+              .includes(keyword)
+
+          ||
+
+          item.name
+              .toLowerCase()
+              .includes(keyword)
+
+      )
+
+  showDropdown.value = true
+
+}
+
+onUnmounted(() => {
+
+  document.removeEventListener(
+      'click',
+      handleClickOutside
+  )
+
+})
 
 /* 表单 */
 
@@ -162,34 +585,238 @@ const form = ref({
 
 })
 
-/* 加载物料 */
 
-const loadMaterials = async () => {
 
-  try {
+/* 修改 */
 
-    const res = await axios.get(
-        '/api/material/list'
-    )
+const editVisible = ref(false)
 
-    console.log(res.data)
+const editForm = ref({})
 
-    materialList.value =
-        res.data.data || []
+const selecting = ref(false)
 
-  } catch (e) {
+/* 删除 */
 
-    console.error(e)
+const deleteVisible = ref(false)
 
-    alert('物料数据加载失败')
+const deleteId = ref(null)
+
+/* 物料 */
+
+const materialList = ref([])
+
+/* 加载列表 */
+
+const loadOutboundList = async () => {
+
+  const res = await axios.get(
+
+      '/api/outbound/page',
+
+      {
+
+        params: {
+
+          current: current.value,
+
+          size: size.value,
+
+          ...query.value
+
+        }
+
+      }
+
+  )
+
+  outboundList.value =
+      res.data.data.records
+
+  pages.value =
+      res.data.data.pages
+
+}
+
+/* 上一页 */
+
+const prevPage = () => {
+
+  if (current.value > 1) {
+
+    current.value--
+
+    loadOutboundList()
 
   }
 
 }
 
-/* 选择物料 */
+const handleFocus = () => {
 
-const handleMaterialChange = async () => {
+  filteredMaterials.value =
+      materialList.value
+
+  showDropdown.value = true
+
+}
+
+/* 下一页 */
+
+const nextPage = () => {
+
+  if (current.value < pages.value) {
+
+    current.value++
+
+    loadOutboundList()
+
+  }
+
+}
+
+/* 修改 */
+
+const openEdit = (row) => {
+
+  editForm.value = {
+
+    ...row
+
+  }
+
+  editVisible.value = true
+
+}
+
+const submitEdit = async () => {
+
+  await axios.put(
+
+      '/api/outbound',
+
+      editForm.value
+
+  )
+
+  editVisible.value = false
+  showMessage('修改成功','success')
+
+  loadOutboundList()
+
+}
+
+/* 删除 */
+
+const openDelete = (row) => {
+
+  deleteId.value = row.id
+
+  deleteVisible.value = true
+
+  showMessage('删除成功','success')
+
+}
+
+const confirmDelete = async () => {
+
+  await axios.delete(
+
+      `/api/outbound/${deleteId.value}`
+
+  )
+
+  deleteVisible.value = false
+
+  loadOutboundList()
+
+}
+
+/* 聚焦 */
+
+const focusMaterial = () => {
+
+  materialRef.value.focus()
+  showMessage('准备扫码','success')
+}
+
+const focusSubmit = () => {
+
+  submitRef.value.focus()
+
+}
+
+/* 提交 */
+
+const submitOutbound = async () => {
+
+  await axios.post(
+
+      '/api/task/outbound',
+
+      form.value
+
+  )
+
+  showMessage('出库成功','success')
+
+  resetForm()
+
+}
+
+const selectMaterial = async (item) => {
+
+  selecting.value = true
+
+  // 填充
+  form.value.materialCode =
+      item.code
+
+  // 关闭下拉
+  showDropdown.value = false
+
+  await nextTick()
+
+  // 查询客户
+  await handleMaterialSelect()
+
+  // 恢复状态锁
+  setTimeout(() => {
+
+    selecting.value = false
+
+    batchRef.value.focus()
+
+  }, 50)
+
+}
+
+const handleClickOutside = (e) => {
+
+  if (!e.target.closest('.custom-select')) {
+
+    showDropdown.value = false
+
+  }
+
+}
+
+const loadMaterials = async () =>
+{ try
+{ const res = await axios.get( '/api/material/list' )
+  console.log(res.data)
+  materialList.value = res.data.data || []
+  filteredMaterials.value = materialList.value
+}
+catch (e) { console.error(e)
+  showMessage('数据获取失败','error') } }
+/* 选择物料 */
+const handleMaterialSelect = async () => {
+
+  if (!form.value.materialCode) {
+
+    return
+
+  }
 
   try {
 
@@ -217,11 +844,7 @@ const handleMaterialChange = async () => {
 
     console.error(e)
 
-    alert('客商查询失败')
-
   }
-
-  /* 清空库存信息 */
 
   form.value.batch = ''
 
@@ -231,125 +854,17 @@ const handleMaterialChange = async () => {
 
 }
 
-/* 搜索库存 */
+const focusBatch = () => {
 
-const searchInventory = async () => {
+  setTimeout(() => {
 
-  if (!form.value.materialCode
-      || !form.value.batch) {
+    batchRef.value.focus()
 
-    return
-  }
-
-  try {
-
-    const res = await axios.get(
-
-        '/api/inventory/search',
-
-        {
-
-          params: {
-
-            materialCode:
-            form.value.materialCode,
-
-            batch:
-            form.value.batch
-
-          }
-
-        }
-
-    )
-
-    console.log(res.data)
-
-    const inventory =
-        res.data.data
-
-    if (!inventory) {
-
-      alert('未找到库存')
-
-      return
-    }
-
-    form.value.quantity =
-        inventory.quantity
-
-    form.value.containerId =
-        inventory.containerId
-
-  } catch (e) {
-
-    console.error(e)
-
-    alert('库存查询失败')
-
-  }
+  }, 50)
 
 }
 
-/* 提交出库 */
 
-const submitOutbound = async () => {
-
-  if (!form.value.materialCode
-      || !form.value.batch
-      || !form.value.containerId) {
-
-    alert('请完善出库信息')
-
-    return
-  }
-
-  try {
-
-    const res = await axios.post(
-
-        '/api/task/outbound',
-
-        {
-
-          materialCode:
-          form.value.materialCode,
-
-          batch:
-          form.value.batch,
-
-          containerId:
-          form.value.containerId
-
-        }
-
-    )
-
-    console.log(res.data)
-
-    if (res.data.code === 200) {
-
-      alert('出库任务创建成功')
-
-      resetForm()
-
-    } else {
-
-      alert(
-          res.data.message || '出库失败'
-      )
-
-    }
-
-  } catch (e) {
-
-    console.error(e)
-
-    alert('服务器异常')
-
-  }
-
-}
 
 /* 重置 */
 
@@ -368,14 +883,19 @@ const resetForm = () => {
     containerId: ''
 
   }
+  showMessage('重置成功','success')
 
 }
-
-/* 初始化 */
 
 onMounted(() => {
 
   loadMaterials()
+  loadOutboundList()
+
+  document.addEventListener(
+      'click',
+      handleClickOutside
+  )
 
 })
 
@@ -385,12 +905,8 @@ onMounted(() => {
 
 .outbound-page {
 
-  display: flex;
-
-  flex-direction: column;
+  padding: 20px;
 }
-
-/* 卡片 */
 
 .card {
 
@@ -403,15 +919,233 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
+.table-card {
+
+  height: 60vh;
+
+  display: flex;
+
+  flex-direction: column;
+}
+
 .card-title {
 
   font-size: 18px;
 
   font-weight: bold;
 
-  margin-bottom: 28px;
+  margin-bottom: 20px;
+}
+
+/* 搜索 */
+
+.search-bar {
+
+  display: grid;
+
+  grid-template-columns: repeat(5, 1fr) auto;
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
 
   color: #333;
+
+  font-size: 14px;
+}
+
+.search-bar input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+}
+
+.search-bar input::placeholder {
+
+  color: #b0b3b8;
+}
+
+.search-bar button {
+
+  min-width: 100px;
+
+  height: 42px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: #409eff;
+
+  color: white;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.search-bar button:hover {
+
+  background: #2f8df7;
+}
+
+/* 表格 */
+
+.inventory-table {
+
+  width: 100%;
+
+  border-collapse: collapse;
+
+  table-layout: fixed;
+}
+
+button:focus {
+
+  outline: none;
+}
+
+.inventory-table thead {
+
+  background: #f5f7fb;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 10;
+}
+
+.dialog input {
+
+  width: 100%;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
+
+  color: #333;
+
+  font-size: 14px;
+
+}
+
+.dialog input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+}
+
+.dialog input::placeholder {
+
+  color: #b0b3b8;
+}
+
+.inventory-table th,
+.inventory-table td {
+
+  border-bottom: 1px solid #ebeef5;
+
+  padding: 14px 12px;
+
+  text-align: center;
+
+  font-size: 14px;
+
+  color: #333;
+}
+
+.inventory-table tbody tr {
+
+  height: 58px;
+}
+
+.inventory-table tbody tr:hover {
+
+  background: #f8fbff;
+}
+
+/* 分页 */
+
+.pagination {
+
+  height: 70px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: right;
+
+  gap: 20px;
+
+  border-top: 1px solid #ebeef5;
+
+  margin-top: 12px;
+}
+
+.pagination button {
+
+  min-width: 90px;
+
+  height: 38px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: #409eff;
+
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.pagination button:hover {
+
+  background: #2f8df7;
+}
+
+.pagination button:disabled {
+
+  background: #c0c4cc;
+
+  cursor: not-allowed;
 }
 
 /* 表单 */
@@ -422,7 +1156,7 @@ onMounted(() => {
 
   grid-template-columns: repeat(2, 1fr);
 
-  gap: 24px 40px;
+  gap: 20px;
 }
 
 .form-item {
@@ -434,11 +1168,7 @@ onMounted(() => {
 
 .form-item label {
 
-  width: 110px;
-
-  color: #666;
-
-  font-size: 14px;
+  width: 100px;
 }
 
 .form-item input,
@@ -461,6 +1191,8 @@ onMounted(() => {
   transition: 0.2s;
 
   color: #333;
+
+  font-size: 14px;
 }
 
 .form-item input:focus,
@@ -471,11 +1203,16 @@ onMounted(() => {
   background: white;
 }
 
+.form-item input::placeholder {
+
+  color: #b0b3b8;
+}
+
 /* 按钮 */
 
 .button-group {
 
-  margin-top: 40px;
+  margin-top: 30px;
 
   display: flex;
 
@@ -485,9 +1222,12 @@ onMounted(() => {
 }
 
 .submit-btn,
-.reset-btn {
+.reset-btn,
+.edit-btn,
+.delete-btn,
+.scan-btn {
 
-  min-width: 120px;
+  min-width: 100px;
 
   height: 42px;
 
@@ -497,21 +1237,36 @@ onMounted(() => {
 
   color: white;
 
-  font-size: 15px;
-
   cursor: pointer;
 
   transition: 0.2s;
 }
 
 .submit-btn {
-
   background: #409eff;
 }
 
-.submit-btn:hover {
+.scan-btn{
+  background: #67c23a;
+}
 
+.scan-btn:hover{
+  background: #67c23a;
+}
+
+.submit-btn:hover{
   background: #2f8df7;
+}
+
+.table-wrapper {
+
+  flex: 1;
+
+  overflow: auto;
+
+  border: 1px solid #ebeef5;
+
+  border-radius: 8px;
 }
 
 .reset-btn {
@@ -520,6 +1275,509 @@ onMounted(() => {
 }
 
 .reset-btn:hover {
+
+  background: #7d8187;
+}
+
+.delete-btn {
+
+  background: #f56c6c;
+}
+
+.delete-btn:hover {
+
+  background: #e45656;
+}
+
+.submit-btn,
+.edit-btn{
+
+  background: #409eff;
+}
+
+@keyframes dialogShow {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+        translateY(-8px)
+        scale(0.98);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+  }
+}
+
+.delete-btn,
+.reset-btn {
+
+  background: #909399;
+}
+
+/* 弹窗 */
+
+.dialog-mask {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,0.35);
+
+  backdrop-filter: blur(2px);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 999;
+}
+
+.dialog {
+
+  width: 420px;
+
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 28px;
+
+  box-shadow:
+      0 8px 24px rgba(0,0,0,0.12);
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+
+  animation: dialogShow 0.2s ease;
+}
+
+.dialog-buttons {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 16px;
+
+  margin-top: 8px;
+}
+
+.dialog-confirm-btn,
+.dialog-cancel-btn {
+
+  min-width: 110px;
+
+  height: 40px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  color: white;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+/* 提交 */
+
+.dialog-confirm-btn {
+
+  background: #409eff;
+}
+
+.dialog-confirm-btn:hover {
+
+  background: #2f8df7;
+}
+
+/* 取消 */
+
+.dialog-cancel-btn {
+
+  background: #909399;
+}
+
+.dialog-cancel-btn:hover {
+
+  background: #7d8187;
+}
+
+.custom-select {
+
+  position: relative;
+
+  flex: 1;
+
+  height: 42px;
+}
+
+.custom-select input {
+
+  width: 100%;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
+
+  color: #333;
+
+  font-size: 14px;
+
+  box-sizing: border-box;
+}
+
+.custom-select input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+}
+
+/* 下拉 */
+
+.dropdown {
+
+  position: absolute;
+
+  top: calc(100% + 4px);
+
+  left: 0;
+
+  width: 100%;
+
+  background: white;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 8px;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+  z-index: 999;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+
+  box-sizing: border-box;
+}
+
+/* 选项 */
+
+.dropdown-item {
+
+  padding: 10px 12px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.dropdown-item:hover {
+
+  background: #f5f7fb;
+}
+
+.material-code {
+
+  font-size: 14px;
+
+  color: #333;
+
+  font-weight: 600;
+}
+
+.material-info {
+
+  font-size: 12px;
+
+  color: #999;
+
+  margin-top: 4px;
+}
+.action-buttons {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+/* 修改 */
+
+.table-edit-btn {
+
+  min-width: 54px;
+
+  height: 30px;
+
+  border: none;
+
+  border-radius: 5px;
+
+  background: #409eff;
+
+  color: white;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.table-edit-btn:hover {
+
+  background: #2f8df7;
+}
+
+/* 删除 */
+
+.table-delete-btn {
+
+  min-width: 54px;
+
+  height: 30px;
+
+  border: none;
+
+  border-radius: 5px;
+
+  background: #f56c6c;
+
+  color: white;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.table-delete-btn:hover {
+
+  background: #e45656;
+}
+
+.industrial-dialog {
+
+  width: 520px;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-shadow:
+      0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* 顶部 */
+
+.dialog-header {
+
+  height: 58px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 24px;
+
+  border-bottom: 1px solid #ebeef5;
+
+  background: #f7f9fc;
+}
+
+.dialog-title {
+
+  font-size: 17px;
+
+  font-weight: 700;
+
+  color: #303133;
+
+  letter-spacing: 0.5px;
+}
+
+/* 表单区域 */
+
+.dialog-form {
+
+  padding: 26px 24px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+/* 单项 */
+
+.dialog-item {
+
+  display: flex;
+
+  align-items: center;
+}
+
+/* label */
+
+.dialog-item label {
+
+  width: 92px;
+
+  flex-shrink: 0;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #606266;
+}
+
+/* 输入框 */
+
+.dialog-item input {
+
+  flex: 1;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 14px;
+
+  background: #f5f7fb;
+
+  color: #303133;
+
+  font-size: 14px;
+
+  transition: all 0.2s;
+}
+
+.dialog-item input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+
+  box-shadow:
+      0 0 0 2px rgba(64,158,255,0.12);
+}
+
+/* placeholder */
+
+.dialog-item input::placeholder {
+
+  color: #b5b7bd;
+}
+
+/* 底部按钮 */
+
+.dialog-buttons {
+
+  height: 72px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 18px;
+
+  border-top: 1px solid #ebeef5;
+
+  background: #fafbfd;
+}
+
+/* 按钮统一 */
+
+.dialog-confirm-btn,
+.dialog-cancel-btn {
+
+  min-width: 120px;
+
+  height: 40px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+/* 提交 */
+
+.dialog-confirm-btn {
+
+  background: #409eff;
+
+  color: white;
+}
+
+.dialog-confirm-btn:hover {
+
+  background: #2f8df7;
+}
+
+/* 取消 */
+
+.dialog-cancel-btn {
+
+  background: #909399;
+
+  color: white;
+}
+
+.dialog-cancel-btn:hover {
 
   background: #7d8187;
 }

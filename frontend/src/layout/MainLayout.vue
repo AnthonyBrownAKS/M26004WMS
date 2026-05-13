@@ -372,13 +372,15 @@ onUnmounted(() => {
 
 .layout {
 
-  flex: 1;
+  height: 100vh;
 
   display: flex;
 
   flex-direction: column;
 
   overflow: hidden;
+
+  background: #f5f7fb;
 }
 
 /* 顶部 */
@@ -656,6 +658,9 @@ onUnmounted(() => {
   color: #1677ff;
 }
 
+
+
+
 .submenu-item.active {
 
   color: #1677ff;
@@ -680,9 +685,13 @@ onUnmounted(() => {
 
   overflow-y: auto;
 
+  overflow-x: hidden;
+
   padding: 20px;
 
   min-width: 0;
+
+  background: #f5f7fb;
 }
 
 /* 滚动条 */

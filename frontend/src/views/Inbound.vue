@@ -2,117 +2,173 @@
 
   <div class="inbound-page">
 
-    <!-- 入库记录 -->
+    <!-- 入库列表 -->
 
-    <div class="card">
+    <div class="card table-card">
 
       <div class="card-title">
-        入库记录
+        入库任务列表
       </div>
 
-      <table class="inventory-table">
+      <!-- 查询 -->
 
-        <thead>
+      <div class="search-bar">
 
-        <tr>
-
-          <th>物料编码</th>
-
-          <th>容器ID</th>
-
-          <th>批次号</th>
-
-          <th>供应商</th>
-
-          <th>数量</th>
-
-          <th>任务创建时间</th>
-
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        <tr
-            v-for="item in inboundList"
-            :key="item.id"
+        <input
+            v-model="query.materialCode"
+            placeholder="物料编码"
         >
 
-          <td>{{ item.materialCode }}</td>
-
-          <td>{{ item.containerId }}</td>
-
-          <td>{{ item.batch }}</td>
-
-          <td>{{ item.customerCode }}</td>
-
-          <td>{{ item.quantity }}</td>
-
-          <td>{{ formatTime(item.creationTime) }}</td>
-
-        </tr>
-
-        <!-- 补空行 -->
-
-        <tr
-            v-for="n in (5 - inboundList.length)"
-            :key="'empty-' + n"
+        <input
+            v-model="query.materialName"
+            placeholder="物料名称"
         >
 
-          <td>&nbsp;</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
+        <input
+            v-model="query.containerId"
+            placeholder="容器ID"
+        >
 
-        </tr>
+        <input
+            v-model="query.batch"
+            placeholder="批次"
+        >
 
-        </tbody>
+        <input
+            v-model="query.customerCode"
+            placeholder="客商编码"
+        >
 
-      </table>
+        <button @click="loadInboundList">
+          查询
+        </button>
+
+      </div>
+
+      <!-- 表格 -->
+
+      <div class="table-wrapper">
+
+        <table class="inventory-table">
+
+          <thead>
+
+          <tr>
+
+            <th>物料名称</th>
+
+            <th>规格</th>
+
+            <th>容器ID</th>
+
+            <th>批次</th>
+
+            <th>客商</th>
+
+            <th>数量</th>
+
+            <th>入库时间</th>
+
+            <th>操作</th>
+
+          </tr>
+
+          </thead>
+
+          <tbody>
+
+          <tr
+              v-for="item in inboundList"
+              :key="item.id"
+          >
+
+<!--            <td>{{ item.materialCode }}</td>-->
+
+            <td>{{ item.materialName }}</td>
+
+            <td>{{ item.spec }}</td>
+
+            <td>{{ item.containerId }}</td>
+
+            <td>{{ item.batch }}</td>
+
+            <td>{{ item.customerCode }}</td>
+
+            <td>{{ item.quantity }}</td>
+
+            <td>{{ item.inboundTime }}</td>
+
+            <td>
+
+              <div class="action-buttons">
+
+                <button
+                    class="table-edit-btn"
+                    @click="openEdit(item)"
+                    @mousedown.prevent
+                >
+                  修改
+                </button>
+
+                <button
+                    class="table-delete-btn"
+                    @click="openDelete(item)"
+                    @mousedown.prevent
+                >
+                  删除
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
 
       <!-- 分页 -->
 
       <div class="pagination">
 
         <button
+            @click="prevPage"
             :disabled="current === 1"
-            @click="changePage(current - 1)"
         >
           上一页
         </button>
 
         <span>
-          第 {{ current }} / {{ pages }} 页
+          第 {{ current }} 页
         </span>
 
         <button
-            :disabled="current === pages"
-            @click="changePage(current + 1)"
+            @click="nextPage"
+            :disabled="current >= pages"
         >
           下一页
         </button>
-
-        <span>
-          共 {{ total }} 条
-        </span>
 
       </div>
 
     </div>
 
-    <!-- 入库表单 -->
+    <div style="height: 32px"></div>
 
-    <div class="card form-card">
+    <!-- 入库 -->
+
+    <div class="card">
 
       <div class="card-title">
-        入库信息
+        入库管理
       </div>
 
       <div class="form-grid">
 
-        <!-- 物料编码 -->
+        <!-- 物料 -->
 
         <div class="form-item">
 
@@ -124,9 +180,7 @@
               id="materialInput"
               v-model="form.materialCode"
               placeholder="扫码或输入物料编码"
-              @keydown.enter.prevent="
-                focusById('quantityInput')
-              "
+              @keyup.enter="focusById('quantityInput')"
           />
 
         </div>
@@ -144,9 +198,7 @@
               type="number"
               v-model="form.quantity"
               placeholder="请输入数量"
-              @keydown.enter.prevent="
-                focusById('containerInput')
-              "
+              @keyup.enter="focusById('containerInput')"
           />
 
         </div>
@@ -161,12 +213,9 @@
 
           <input
               id="containerInput"
-              :value="form.containerId"
-              @input="form.containerId = $event.target.value.toUpperCase()"
+              v-model="form.containerId"
               placeholder="扫码或输入容器ID"
-              @keydown.enter.prevent="
-                focusById('customerInput')
-              "
+              @keyup.enter="focusById('customerInput')"
           />
 
         </div>
@@ -183,9 +232,7 @@
               id="customerInput"
               v-model="form.customerCode"
               placeholder="请输入客商编码"
-              @keydown.enter.prevent="
-                submitInbound
-              "
+              @keyup.enter="submitInbound"
           />
 
         </div>
@@ -204,18 +251,177 @@
         </button>
 
         <button
+            class="submit-btn"
+            @click="submitInbound"
+        >
+          提交入库
+        </button>
+
+        <button
             class="reset-btn"
             @click="resetForm"
         >
           重置
         </button>
 
-        <button
-            class="submit-btn"
-            @click="submitInbound"
-        >
-          提交入库
-        </button>
+      </div>
+
+    </div>
+
+    <!-- 修改 -->
+
+    <div
+        v-if="editVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog industrial-dialog">
+
+        <!-- 标题 -->
+
+        <div class="dialog-header">
+
+          <div class="dialog-title">
+            修改出库记录
+          </div>
+
+        </div>
+
+        <!-- 表单 -->
+
+        <div class="dialog-form">
+
+          <!-- 物料名称 -->
+
+          <div class="dialog-item">
+
+            <label>
+              物料名称
+            </label>
+
+            <input
+                v-model="editForm.materialName"
+                placeholder="请输入物料名称"
+            >
+
+          </div>
+
+          <!-- 规格 -->
+
+          <div class="dialog-item">
+
+            <label>
+              规格型号
+            </label>
+
+            <input
+                v-model="editForm.spec"
+                placeholder="请输入规格"
+            >
+
+          </div>
+
+          <!-- 批次 -->
+
+          <div class="dialog-item">
+
+            <label>
+              批次号
+            </label>
+
+            <input
+                v-model="editForm.batch"
+                placeholder="请输入批次号"
+            >
+
+          </div>
+
+          <!-- 客商 -->
+
+          <div class="dialog-item">
+
+            <label>
+              客商编码
+            </label>
+
+            <input
+                v-model="editForm.customerCode"
+                placeholder="请输入客商编码"
+            >
+
+          </div>
+
+          <!-- 数量 -->
+
+          <div class="dialog-item">
+
+            <label>
+              出库数量
+            </label>
+
+            <input
+                v-model="editForm.quantity"
+                placeholder="请输入数量"
+            >
+
+          </div>
+
+        </div>
+
+        <!-- 按钮 -->
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="submitEdit"
+          >
+            提交修改
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="editVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 删除 -->
+
+    <div
+        v-if="deleteVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog">
+
+        <h3>
+          确认删除？
+        </h3>
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="confirmDelete"
+          >
+            确定
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="deleteVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
 
       </div>
 
@@ -228,15 +434,15 @@
 <script setup>
 
 import axios from 'axios'
-
 import {
-  onMounted,
   ref,
+  onMounted,
   nextTick,
   inject
 } from 'vue'
 
-/* 入库记录 */
+const showMessage =
+    inject('showMessage')
 
 const inboundList = ref([])
 
@@ -244,15 +450,29 @@ const current = ref(1)
 
 const pages = ref(1)
 
-const total = ref(0)
-
 const size = ref(5)
 
-// 提示弹窗
-const showMessage =
-    inject('showMessage')
+const editVisible = ref(false)
 
-/* 表单 */
+const deleteVisible = ref(false)
+
+const deleteId = ref(null)
+
+const editForm = ref({})
+
+const query = ref({
+
+  materialCode: '',
+
+  materialName: '',
+
+  containerId: '',
+
+  batch: '',
+
+  customerCode: ''
+
+})
 
 const form = ref({
 
@@ -266,236 +486,94 @@ const form = ref({
 
 })
 
-/* 聚焦指定ID */
+const loadInboundList = async () => {
+
+  const res = await axios.get(
+
+      '/api/inbound/page',
+
+      {
+
+        params: {
+
+          current: current.value,
+
+          size: size.value,
+
+          ...query.value
+
+        }
+
+      }
+
+  )
+
+  inboundList.value =
+      res.data.data.records
+
+  pages.value =
+      res.data.data.pages
+
+}
+
+const prevPage = () => {
+
+  if (current.value > 1) {
+
+    current.value--
+
+    loadInboundList()
+
+  }
+
+}
+
+const nextPage = () => {
+
+  if (current.value < pages.value) {
+
+    current.value++
+
+    loadInboundList()
+
+  }
+
+}
 
 const focusById = async (id) => {
 
   await nextTick()
 
-  const el =
-      document.getElementById(id)
-
-  if (el) {
-
-    el.focus()
-
-    el.select?.()
-
-  }
+  document
+      .getElementById(id)
+      ?.focus()
 
 }
-
-/* 扫一扫 */
 
 const focusScan = () => {
 
   focusById('materialInput')
+  showMessage('准备扫码','success')
 
 }
 
-/* 加载记录 */
+const submitInbound = async () => {
 
-const loadInboundList = async () => {
+  await axios.post(
 
-  try {
+      '/api/task/inbound',
 
-    const res = await axios.get(
+      form.value
 
-        '/api/material/inbound',
+  )
 
-        {
+  showMessage('入库成功','success')
 
-          params: {
-
-            current: current.value,
-
-            size: size.value
-
-          }
-
-        }
-
-    )
-
-    const data = res.data.data
-
-    inboundList.value =
-        data || []
-
-    current.value =
-        data.current || 1
-
-    pages.value =
-        data.pages || 1
-
-    total.value =
-        data.total || 0
-
-  } catch (e) {
-
-    console.error(e)
-
-    showMessage(
-        '入库记录加载失败',
-        'error'
-    )
-
-  }
-
-}
-
-/* 翻页 */
-
-const changePage = (page) => {
-
-  current.value = page
+  resetForm()
 
   loadInboundList()
 
 }
-
-/* 时间格式 */
-
-const formatTime = (time) => {
-
-  if (!time) {
-
-    return ''
-  }
-
-  return time
-      .replace('T', ' ')
-      .substring(0, 19)
-
-}
-
-/* 提交 */
-
-const submitInbound = async () => {
-
-  /* 去除空格 */
-
-  const materialCode =
-      form.value.materialCode.trim()
-
-  const quantity =
-      String(form.value.quantity).trim()
-
-  const containerId =
-      form.value.containerId.trim()
-
-  const customerCode =
-      form.value.customerCode.trim()
-
-  /* 非空判断 */
-
-  if (
-      !materialCode ||
-      !quantity ||
-      !containerId ||
-      !customerCode
-  ) {
-
-    showMessage(
-        '所有字段不能为空',
-        'error'
-    )
-
-    return
-
-  }
-
-  /* 容器ID判断 */
-
-  if (!containerId.startsWith('PT')) {
-
-    showMessage(
-        '容器ID必须以PT开头',
-        'error'
-    )
-
-    focusById('containerInput')
-
-    return
-
-  }
-
-  /* 数量判断 */
-
-  const num = Number(quantity)
-
-  if (
-      isNaN(num) ||
-      num <= 0
-  ) {
-
-    showMessage(
-        '数量必须为正数字',
-        'error'
-    )
-
-    focusById('quantityInput')
-
-    return
-
-  }
-
-  try {
-
-    const res = await axios.post(
-
-        '/api/task/inbound',
-
-        {
-
-          materialCode,
-
-          quantity: num,
-
-          containerId,
-
-          customerCode
-
-        }
-
-    )
-
-    if (res.data.code === 200) {
-
-      showMessage(
-          '入库成功',
-          'success'
-      )
-
-      resetForm()
-
-      loadInboundList()
-
-      focusScan()
-
-    } else {
-
-      showMessage(
-          '提交失败',
-          'error'
-      )
-
-    }
-
-  } catch (e) {
-
-    console.error(e)
-
-    showMessage(
-        '服务器异常',
-        'error'
-    )
-
-  }
-
-}
-
-/* 重置 */
 
 const resetForm = () => {
 
@@ -510,16 +588,64 @@ const resetForm = () => {
     customerCode: ''
 
   }
+  showMessage('重置成功','success')
 
 }
 
-/* 初始化 */
+const openEdit = (row) => {
+
+  editForm.value = {
+
+    ...row
+
+  }
+
+  editVisible.value = true
+
+}
+
+const submitEdit = async () => {
+
+  await axios.put(
+
+      '/api/inbound/update',
+
+      editForm.value
+
+  )
+
+  editVisible.value = false
+  showMessage('修改成功','success')
+
+  loadInboundList()
+
+}
+
+const openDelete = (row) => {
+
+  deleteId.value = row.id
+
+  deleteVisible.value = true
+
+}
+
+const confirmDelete = async () => {
+
+  await axios.delete(
+
+      `/api/inbound/${deleteId.value}`
+
+  )
+
+  deleteVisible.value = false
+
+  loadInboundList()
+
+}
 
 onMounted(() => {
 
   loadInboundList()
-
-  focusScan()
 
 })
 
@@ -529,14 +655,8 @@ onMounted(() => {
 
 .inbound-page {
 
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 20px;
+  padding: 20px;
 }
-
-/* 卡片 */
 
 .card {
 
@@ -544,86 +664,232 @@ onMounted(() => {
 
   border-radius: 10px;
 
-  padding: 20px;
+  padding: 24px;
 
-  box-shadow:
-      0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.table-card {
+
+  height: 60vh;
+
+  display: flex;
+
+  flex-direction: column;
+}
+
+.inventory-table th {
+
+  color: #666;
+
+  font-weight: 700;
+
+  font-size: 14px;
+
+  background: #f5f7fb;
 }
 
 .card-title {
 
   font-size: 18px;
 
-  font-weight: bold;
-
   margin-bottom: 20px;
 
-  color: #333;
+  font-weight: bold;
 }
 
-/* 表格 */
+.search-bar {
+
+  display: grid;
+
+  grid-template-columns: repeat(5, 1fr) auto;
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.search-bar input,
+.dialog input {
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
+
+  color: #333;
+
+  font-size: 14px;
+}
+
+.form-item input{
+  flex: 1;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
+
+  color: #333;
+
+  font-size: 14px;
+}
+
+
+.search-bar input:focus,
+.form-item input:focus,
+.dialog input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+}
+
+.search-bar input::placeholder,
+.form-item input::placeholder,
+.dialog input::placeholder {
+
+
+  color: #b0b3b8;
+}
+
+.search-bar button,
+.submit-btn,
+.reset-btn,
+.scan-btn,
+.dialog-confirm-btn,
+.dialog-cancel-btn {
+
+  min-width: 100px;
+
+  height: 42px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.search-bar button,
+.submit-btn,
+.dialog-confirm-btn {
+
+  background: #2f8df7;
+}
+
+.search-bar button:hover,
+.submit-btn:hover,
+.dialog-confirm-btn:hover {
+
+  background: #2f8df7;
+}
+
+.scan-btn {
+
+  background: #67c23a;
+}
+
+.reset-btn,
+.dialog-cancel-btn {
+
+  background: #909399;
+}
+
+.table-wrapper {
+
+  flex: 1;
+
+  overflow: auto;
+
+  border: 1px solid #ebeef5;
+
+  border-radius: 8px;
+}
 
 .inventory-table {
 
   width: 100%;
 
   border-collapse: collapse;
+
+  table-layout: fixed;
 }
 
 .inventory-table thead {
 
-  background: #f5f7fa;
+  background: #f5f7fb;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 10;
 }
 
-.inventory-table th {
-
-  height: 48px;
-
-  color: #666;
-
-  font-weight: bold;
-
-  border-bottom:
-      1px solid #ebeef5;
-}
-
-.inventory-table tbody {
-
-  height: 320px;
-}
-
+.inventory-table th,
 .inventory-table td {
 
-  height: 52px;
+  border-bottom: 1px solid #ebeef5;
+
+  padding: 14px 12px;
 
   text-align: center;
 
-  border-bottom:
-      1px solid #ebeef5;
+  font-size: 14px;
 
-  color: #555;
+  color: #333;
 }
 
-/* 分页 */
+.inventory-table tbody tr:hover {
+
+  background: #f8fbff;
+}
 
 .pagination {
 
-  margin-top: 20px;
+  height: 70px;
 
   display: flex;
 
-  justify-content: flex-end;
+  justify-content: right;
 
   align-items: center;
 
-  gap: 16px;
+  gap: 20px;
+
+  border-top: 1px solid #ebeef5;
+
+  margin-top: 12px;
 }
 
 .pagination button {
 
-  height: 34px;
+  min-width: 90px;
 
-  padding: 0 16px;
+  height: 38px;
 
   border: none;
 
@@ -634,30 +900,29 @@ onMounted(() => {
   color: white;
 
   cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.pagination button:hover {
+
+  background: #2f8df7;
 }
 
 .pagination button:disabled {
 
-  background: #ccc;
+  background: #c0c4cc;
 
   cursor: not-allowed;
-}
-
-/* 表单 */
-
-.form-card {
-
-  padding-bottom: 30px;
 }
 
 .form-grid {
 
   display: grid;
 
-  grid-template-columns:
-      repeat(2, 1fr);
+  grid-template-columns: repeat(2,1fr);
 
-  gap: 20px 40px;
+  gap: 20px;
 }
 
 .form-item {
@@ -670,42 +935,7 @@ onMounted(() => {
 .form-item label {
 
   width: 100px;
-
-  color: #666;
-
-  font-size: 14px;
 }
-
-.form-item input {
-
-  flex: 1;
-
-  height: 42px;
-
-  border:
-      1px solid #dcdfe6;
-
-  border-radius: 6px;
-
-  padding: 0 12px;
-
-  outline: none;
-
-  background: #f5f7fb;
-
-  color: #2e303a;
-
-  transition: 0.2s;
-}
-
-.form-item input:focus {
-
-  border-color: #409eff;
-
-  background: white;
-}
-
-/* 按钮 */
 
 .button-group {
 
@@ -718,53 +948,272 @@ onMounted(() => {
   gap: 20px;
 }
 
-.scan-btn,
-.submit-btn,
-.reset-btn {
+.dialog-mask {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,0.35);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 999;
+}
+
+.dialog {
+
+  width: 420px;
+
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 28px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+.dialog-buttons {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 16px;
+}
+
+.action-buttons {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 8px;
+}
+
+.table-edit-btn,
+.table-delete-btn {
+
+  min-width: 54px;
+
+  height: 30px;
+
+  border: none;
+
+  border-radius: 5px;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+.table-edit-btn {
+
+  background: #409eff;
+}
+
+.table-delete-btn {
+
+  background: #f56c6c;
+}
+
+/* 工业风弹窗 */
+
+.industrial-dialog {
+
+  width: 520px;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-shadow:
+      0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* 顶部 */
+
+.dialog-header {
+
+  height: 58px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 24px;
+
+  border-bottom: 1px solid #ebeef5;
+
+  background: #f7f9fc;
+}
+
+.dialog-title {
+
+  font-size: 17px;
+
+  font-weight: 700;
+
+  color: #303133;
+
+  letter-spacing: 0.5px;
+}
+
+/* 表单区域 */
+
+.dialog-form {
+
+  padding: 26px 24px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+/* 单项 */
+
+.dialog-item {
+
+  display: flex;
+
+  align-items: center;
+}
+
+/* label */
+
+.dialog-item label {
+
+  width: 92px;
+
+  flex-shrink: 0;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #606266;
+}
+
+/* 输入框 */
+
+.dialog-item input {
+
+  flex: 1;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 14px;
+
+  background: #f5f7fb;
+
+  color: #303133;
+
+  font-size: 14px;
+
+  transition: all 0.2s;
+}
+
+.dialog-item input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+
+  box-shadow:
+      0 0 0 2px rgba(64,158,255,0.12);
+}
+
+/* placeholder */
+
+.dialog-item input::placeholder {
+
+  color: #b5b7bd;
+}
+
+/* 底部按钮 */
+
+.dialog-buttons {
+
+  height: 72px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 18px;
+
+  border-top: 1px solid #ebeef5;
+
+  background: #fafbfd;
+}
+
+/* 按钮统一 */
+
+.dialog-confirm-btn,
+.dialog-cancel-btn {
 
   min-width: 120px;
 
-  height: 42px;
+  height: 40px;
 
   border: none;
 
   border-radius: 6px;
 
+  font-size: 14px;
+
+  font-weight: 600;
+
   cursor: pointer;
-
-  color: white;
-
-  font-size: 15px;
 
   transition: 0.2s;
 }
 
-.scan-btn {
+/* 提交 */
 
-  background: #67c23a;
-}
-
-.scan-btn:hover {
-
-  background: #5daf34;
-}
-
-.submit-btn {
+.dialog-confirm-btn {
 
   background: #409eff;
+
+  color: white;
 }
 
-.submit-btn:hover {
+.dialog-confirm-btn:hover {
 
   background: #2f8df7;
 }
 
-.reset-btn {
+/* 取消 */
+
+.dialog-cancel-btn {
 
   background: #909399;
+
+  color: white;
 }
 
-.reset-btn:hover {
+.dialog-cancel-btn:hover {
 
   background: #7d8187;
 }

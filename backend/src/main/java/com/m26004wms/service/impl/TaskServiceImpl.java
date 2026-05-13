@@ -45,6 +45,9 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private InventoryMapper inventoryMapper;
 
+    @Autowired
+    private OutboundMapper outboundMapper;
+
     /**
      * 绑定任务
      */
@@ -161,6 +164,22 @@ public class TaskServiceImpl implements TaskService {
         // 接受任务
         Task task = new Task();
 
+        // 添加出库任务记录
+        Outbound ob = new Outbound();
+        ob.setMaterialCode(materialContainer.getMaterialCode());
+        ob.setContainerId(materialContainer.getContainerId());
+        ob.setQuantity(materialContainer.getQuantity());
+        ob.setBatch(materialContainer.getBatch());
+        ob.setCustomerCode(materialContainer.getCustomerCode());
+        ob.setOutTime(LocalDateTime.now());
+
+        Material m = materialMapper.getByCustomerCode(materialContainer.getMaterialCode());
+        ob.setSpec(m.getSpec());
+        ob.setMaterialName(m.getName());
+
+        outboundMapper.insert(ob);
+
+
         String containerId = materialContainer.getContainerId();
         // 设置原位置
         task.setSourceLocationId(inventoryMapper.getLocationAreaIdByContainerId(containerId));
@@ -233,6 +252,8 @@ public class TaskServiceImpl implements TaskService {
     public String scanOutbound(Scan scan) {
         // 解除绑定
         materialContainerMapper.deleteByContainerId(scan.getContainerId());
+
+
         return "扫码出库成功";
     }
 

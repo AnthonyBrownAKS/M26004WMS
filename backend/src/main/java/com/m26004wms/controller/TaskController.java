@@ -50,7 +50,7 @@ public class TaskController {
 
     /**
      * 创建出库任务
-     * 传入值: materialCode, batch, containerId
+     * 传入值: materialCode, batch, containerId, customerCode, quantity
      */
     @PostMapping("/outbound")
     public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
