@@ -66,4 +66,61 @@ public interface MaterialMapper extends BaseMapper<Material>{
             String materialCode
     );
 
+    /**
+     * 分页
+     */
+    @Select("""
+
+            select *
+
+            from material
+
+            where
+
+            (
+                #{code} is null
+                or
+                #{code} = ''
+                or
+                code like concat('%', #{code}, '%')
+            )
+
+            order by material.creation_time desc
+
+            limit #{offset}, #{size}
+
+            """)
+    List<Material> selectPage(
+            @Param("offset")
+            int offset,
+
+            @Param("size")
+            int size,
+
+            @Param("code")
+            String code
+    );
+
+    @Select("""
+
+            select count(*)
+
+            from material
+
+            where
+
+            (
+                #{code} is null
+                or
+                #{code} = ''
+                or
+                code like concat('%', #{code}, '%')
+            )
+
+            """)
+    Long selectCount(
+            @Param("code")
+            String code
+    );
+
 }

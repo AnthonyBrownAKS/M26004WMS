@@ -96,7 +96,7 @@
 
             <td>{{ item.quantity }}</td>
 
-            <td>{{ item.inboundTime }}</td>
+            <td>{{ formatTime(item.inboundTime) }}</td>
 
             <td>
 
@@ -559,20 +559,79 @@ const focusScan = () => {
 
 const submitInbound = async () => {
 
-  await axios.post(
+  // 非空判断
+  if (
+      !form.value.materialCode ||
+      !form.value.quantity ||
+      !form.value.containerId ||
+      !form.value.customerCode
+  ) {
 
-      '/api/task/inbound',
+    showMessage('所有字段不能为空', 'error')
+    return
 
-      form.value
+  }
 
-  )
+  // 数量必须是数字
+  if (isNaN(form.value.quantity)) {
 
-  showMessage('入库成功','success')
+    showMessage('数量必须为数字', 'error')
+    return
 
-  resetForm()
+  }
 
-  loadInboundList()
+  // 数量必须大于0
+  if (Number.isNaN(Number(form.value.quantity))) {
 
+    showMessage('数量必须大于0', 'error')
+    return
+
+  }
+
+  // 容器ID必须以PT开头
+  if (!form.value.containerId.startsWith('PT')) {
+
+    showMessage('容器ID必须以PT开头', 'error')
+    return
+
+  }
+
+  try {
+
+    await axios.post(
+
+        '/api/task/inbound',
+
+        form.value
+
+    )
+
+    showMessage('入库成功', 'success')
+
+    resetForm()
+
+    loadInboundList()
+
+  } catch (e) {
+
+    showMessage('入库失败', 'error')
+
+  }
+
+}
+
+/* 时间格式化 */
+
+const formatTime = (time) => {
+
+  if (!time) {
+
+    return '-'
+  }
+
+  return time
+      .replace('T', ' ')
+      .substring(0, 19)
 }
 
 const resetForm = () => {
@@ -588,7 +647,7 @@ const resetForm = () => {
     customerCode: ''
 
   }
-  showMessage('重置成功','success')
+  // showMessage('重置成功','success')
 
 }
 
@@ -608,7 +667,7 @@ const submitEdit = async () => {
 
   await axios.put(
 
-      '/api/inbound/update',
+      '/api/inbound/add',
 
       editForm.value
 
@@ -633,7 +692,7 @@ const confirmDelete = async () => {
 
   await axios.delete(
 
-      `/api/inbound/${deleteId.value}`
+      `/api/inbound/delete/${deleteId.value}`
 
   )
 

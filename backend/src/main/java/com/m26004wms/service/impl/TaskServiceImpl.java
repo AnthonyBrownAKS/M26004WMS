@@ -47,6 +47,8 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private OutboundMapper outboundMapper;
+    @Autowired
+    private InboundMapper inboundMapper;
 
     /**
      * 绑定任务
@@ -91,8 +93,22 @@ public class TaskServiceImpl implements TaskService {
             // 批次定义
             mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
             mc.setCreationTime(time);
-
             materialContainerMapper.insertOrUpdate(mc);
+
+            //记录任务
+            Inbound in = new Inbound();
+            Material material = materialMapper.getByCustomerCode(scan.getMaterialCode());
+
+            in.setMaterialCode(material.getCode());
+            in.setMaterialName(material.getName());
+            in.setSpec(material.getSpec());
+            in.setContainerId(scan.getContainerId());
+            in.setBatch(mc.getBatch());
+            in.setCustomerCode(scan.getCustomerCode());
+            in.setQuantity(scan.getQuantity());
+            in.setInboundTime(LocalDateTime.now());
+
+            inboundMapper.insert(in);
 
             // 任务进入队列
             // taskQueue.addTask(task);
@@ -326,8 +342,7 @@ public class TaskServiceImpl implements TaskService {
 
         // 总页数
 
-        long pages =
-                (total + size - 1) / size;
+        long pages = (total + size - 1) / size;
 
         // 返回结构
 

@@ -1,5 +1,7 @@
 package com.m26004wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
@@ -8,6 +10,7 @@ import com.m26004wms.service.MaterialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,9 +26,18 @@ public class MaterialServiceImpl
     @Autowired
     private MaterialMapper materialMapper;
 
-    // 解决2025/5/20 07:15:36格式数据的转换
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+    // 解决时间问题
+    private static final List<DateTimeFormatter> FORMATTERS = List.of(
+
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+
+            DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss"),
+
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+
+            DateTimeFormatter.ofPattern("yyyy/M/d HH:mm")
+
+    );
 
     @Override
     public Material getMaterialById(String id) {
@@ -130,12 +142,59 @@ public class MaterialServiceImpl
     }
 
     // 时间格式转换
-    private LocalDateTime parseTime(String v) {
-        if (v == null || v.trim().isEmpty()) {
+    public static LocalDateTime parseTime(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+
             return null;
+
         }
 
-        return LocalDateTime.parse(v, FORMATTER);
+        value = value.trim();
+
+        for (DateTimeFormatter formatter : FORMATTERS) {
+
+            try {
+
+                return LocalDateTime.parse(value, formatter);
+
+            } catch (Exception ignored) {
+
+            }
+
+        }
+
+        throw new RuntimeException(
+                "无法解析时间格式: " + value
+        );
+
+    }
+
+    @Override
+    public Object page(Integer current, Integer size, String code) {
+
+        int offset = (current - 1) * size;
+        List<Material> records = materialMapper.selectPage(offset, size, code);
+
+        Long total = materialMapper.selectCount(code);
+
+        long pages = (total + size - 1) / size;
+
+        Map<String, Object> result =
+                new HashMap<>();
+
+        result.put("records", records);
+
+        result.put("current", current);
+
+        result.put("pages", pages);
+
+        result.put("size", size);
+
+        result.put("total", total);
+
+        return result;
+
     }
 
 

@@ -11,33 +11,33 @@ import lombok.Data;
 @Data
 public class MaterialExcelDTO {
 
-    @ExcelProperty("Id")
+    @ExcelProperty("id")
     private String id;
 
-    @ExcelProperty("Code")
+    @ExcelProperty("code")
     private String code;
 
-    @ExcelProperty("ShortCode")
+    @ExcelProperty("shortCode")
     private String shortCode;
 
-    @ExcelProperty("Name")
+    @ExcelProperty("name")
     private String name;
 
-    @ExcelProperty("Spec")
+    @ExcelProperty("spec")
     private String spec;
 
-    @ExcelProperty("IsUnique")
+    @ExcelProperty("isUnique")
     private Boolean isUnique;
 
-    @ExcelProperty("ValidityDate")
+    @ExcelProperty("validityDate")
     private Integer validityDate;
 
-    @ExcelProperty("AbcType")
+    @ExcelProperty("abcType")
     private String abcType;
 
-    @ExcelProperty("SafetyStock")
+    @ExcelProperty("safetyStock")
     private Integer safetyStock;
 
-    @ExcelProperty("CreationTime")
+    @ExcelProperty("creationTime")
     private String creationTime;
 }

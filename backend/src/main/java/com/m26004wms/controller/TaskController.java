@@ -1,6 +1,7 @@
 package com.m26004wms.controller;
 
 import com.m26004wms.entity.*;
+import com.m26004wms.mapper.TaskMapper;
 import com.m26004wms.service.TaskService;
 import com.m26004wms.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,9 @@ public class TaskController {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private TaskMapper taskMapper;
 
     /**
      * 绑定程序√
@@ -122,6 +126,22 @@ public class TaskController {
 
         return Result.success("分页查询成功",
                 taskService.pageTasks(current, size, containerId));
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<String> deleteTask(@PathVariable String id){
+        try{
+            taskMapper.deleteById(id);
+            return Result.success();
+        }catch(Exception e) {
+            return Result.fail("数据库错误");
+        }
+    }
+
+    @PostMapping("/add")
+    public Result<String> addTask(@RequestBody Task task){
+        taskMapper.insertOrUpdate(task);
+        return Result.success();
     }
 
 

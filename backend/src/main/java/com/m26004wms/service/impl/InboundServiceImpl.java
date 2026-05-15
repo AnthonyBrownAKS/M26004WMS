@@ -6,16 +6,22 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.m26004wms.entity.Inbound;
 import com.m26004wms.mapper.InboundMapper;
 import com.m26004wms.service.InboundService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
-public class InboundServiceImpl
-        extends ServiceImpl<InboundMapper, Inbound>
-        implements InboundService {
+public class InboundServiceImpl implements InboundService {
+
+    @Autowired
+    private InboundMapper inboundMapper;
 
     @Override
-    public Page<Inbound> pageQuery(
+    public Object pageQuery(
 
             Integer current,
 
@@ -33,90 +39,49 @@ public class InboundServiceImpl
 
     ) {
 
-        Page<Inbound> page =
-                new Page<>(current, size);
+        int offset = (current - 1) * size;
 
-        QueryWrapper<Inbound> queryWrapper =
-                new QueryWrapper<>();
+        // 防止空值
+        materialCode = materialCode == null ? "" : materialCode;
+        materialName = materialName == null ? "" : materialName;
+        containerId = containerId == null ? "" : containerId;
+        batch = batch == null ? "" : batch;
+        customerCode = customerCode == null ? "" : customerCode;
 
-        // 物料编码
-
-        queryWrapper.like(
-
-                StringUtils.hasText(materialCode),
-
-                "material_code",
-
-                materialCode
-
-        );
-
-        // 材料名称
-
-        queryWrapper.like(
-                StringUtils.hasText(materialName),
-                "material_name",
-                materialName
-        );
-
-        // 物料名称
-
-        queryWrapper.like(
-
-                StringUtils.hasText(materialName),
-
-                "material_name",
-
-                materialName
-
-        );
-
-        // 容器ID
-
-        queryWrapper.like(
-
-                StringUtils.hasText(containerId),
-
-                "container_id",
-
-                containerId
-
-        );
-
-        // 批次
-
-        queryWrapper.like(
-
-                StringUtils.hasText(batch),
-
-                "batch",
-
-                batch
-
-        );
-
-        // 客商编码
-
-        queryWrapper.like(
-
-                StringUtils.hasText(customerCode),
-
-                "customer_code",
-
+        List<Inbound> records = inboundMapper.selectPage(
+                offset,
+                size,
+                materialCode,
+                materialName,
+                containerId,
+                batch,
                 customerCode
-
         );
 
-        // 时间倒序
+        Long total = inboundMapper.selectCount(
+                materialCode,
+                materialName,
+                containerId,
+                batch,
+                customerCode);
 
-        queryWrapper.orderByDesc(
-                "inbound_time"
-        );
+        long pages = (total + size - 1) / size;
 
-        return baseMapper.selectPage(
-                page,
-                queryWrapper
-        );
+        Map<String, Object> result =
+                new HashMap<>();
+
+        result.put("records", records);
+
+        result.put("current", current);
+
+        result.put("pages", pages);
+
+        result.put("size", size);
+
+        result.put("total", total);
+
+        return result;
+
 
     }
 

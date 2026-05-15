@@ -94,7 +94,7 @@
 
           <td>{{ item.quantity }}</td>
 
-          <td>{{ item.outTime }}</td>
+          <td>{{ formatTime(item.outTime) }}</td>
 
           <td>
 
@@ -227,46 +227,14 @@
           </label>
 
           <input
+              id="customerInput"
               v-model="form.customerCode"
-              readonly
-              placeholder="自动填充"
+              placeholder="请输入客商编码"
+              @keyup.enter="focusById('containerIdInput')"
           />
 
         </div>
 
-        <!-- 批次 -->
-
-        <div class="form-item">
-
-          <label>
-            批次号：
-          </label>
-
-          <input
-              ref="batchRef"
-              v-model="form.batch"
-              placeholder="请输入批次号"
-              @blur="searchInventory"
-              @keyup.enter="submitOutbound"
-          />
-
-        </div>
-
-        <!-- 数量 -->
-
-        <div class="form-item">
-
-          <label>
-            数量：
-          </label>
-
-          <input
-              v-model="form.quantity"
-              readonly
-              placeholder="自动填充"
-          />
-
-        </div>
 
         <!-- 容器 -->
 
@@ -277,12 +245,74 @@
           </label>
 
           <input
+              id="containerIdInput"
               v-model="form.containerId"
-              readonly
-              placeholder="自动填充"
+              placeholder="请输入容器ID"
+              @keyup.enter="focusById('quantityInput')"
           />
 
         </div>
+
+
+        <!-- 数量 -->
+
+        <div class="form-item">
+
+          <label>
+            数量：
+          </label>
+
+          <div class="number-input">
+
+            <button
+                type="button"
+                class="number-btn"
+                @click="editForm.quantity--"
+            >
+              -
+            </button>
+
+            <input
+                id="quantityInput"
+                type="number"
+                v-model="editForm.quantity"
+                @keyup.enter="focusById('batchInput')"
+            >
+
+            <button
+                type="button"
+                class="number-btn"
+                @click="editForm.quantity++"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- 批次 -->
+
+        <div class="form-item">
+
+
+          <label>
+            批次号：
+          </label>
+
+          <input
+              id="batchInput"
+              ref="batchRef"
+              v-model="form.batch"
+              placeholder="请输入批次号"
+              @blur="searchInventory"
+              @keyup.enter="focusById('quantityInput')"
+          />
+
+        </div>
+
+
 
       </div>
 
@@ -692,7 +722,7 @@ const submitEdit = async () => {
 
   await axios.put(
 
-      '/api/outbound',
+      '/api/outbound/add',
 
       editForm.value
 
@@ -713,7 +743,6 @@ const openDelete = (row) => {
 
   deleteVisible.value = true
 
-  showMessage('删除成功','success')
 
 }
 
@@ -725,10 +754,26 @@ const confirmDelete = async () => {
 
   )
 
+  showMessage('删除成功','success')
+
   deleteVisible.value = false
 
   loadOutboundList()
 
+}
+
+/* 时间格式化 */
+
+const formatTime = (time) => {
+
+  if (!time) {
+
+    return '-'
+  }
+
+  return time
+      .replace('T', ' ')
+      .substring(0, 19)
 }
 
 /* 聚焦 */
@@ -739,28 +784,56 @@ const focusMaterial = () => {
   showMessage('准备扫码','success')
 }
 
-const focusSubmit = () => {
-
-  submitRef.value.focus()
-
-}
 
 /* 提交 */
 
 const submitOutbound = async () => {
 
-  await axios.post(
+  if (
+      !form.value.materialCode ||
+      !form.value.quantity ||
+      !form.value.containerId ||
+      !form.value.customerCode ||
+      !form.value.batch
+  ) {
+    showMessage('所有字段不能为空', 'error')
+    return
+  }
+  // 数量必须是数字
+  if (isNaN(form.value.quantity)) {
+    showMessage('数量必须为数字', 'error')
+    return
+  }
+  // 数量必须大于0
+  if (Number.isNaN(Number(form.value.quantity))) {
+    showMessage('数量必须大于0', 'error')
+    return
+  }
 
-      '/api/task/outbound',
+  // 容器ID必须以PT开头
+  if (!form.value.containerId.startsWith('PT')) {
+    showMessage('容器ID必须以PT开头', 'error')
+    return
+  }
 
-      form.value
+  try {
+    await axios.post(
+        '/api/task/outbound',
 
-  )
+        form.value
+    )
 
-  showMessage('出库成功','success')
+    showMessage('出库成功', 'success')
 
-  resetForm()
+    resetForm()
 
+    loadOutboundList()
+
+  } catch (e) {
+
+    showMessage('入库失败', 'error')
+
+  }
 }
 
 const selectMaterial = async (item) => {
@@ -784,7 +857,7 @@ const selectMaterial = async (item) => {
 
     selecting.value = false
 
-    batchRef.value.focus()
+    focusById("customerInput")
 
   }, 50)
 
@@ -797,6 +870,16 @@ const handleClickOutside = (e) => {
     showDropdown.value = false
 
   }
+
+}
+
+const focusById = async (id) => {
+
+  await nextTick()
+
+  document
+      .getElementById(id)
+      ?.focus()
 
 }
 
@@ -1780,6 +1863,87 @@ button:focus {
 .dialog-cancel-btn:hover {
 
   background: #7d8187;
+}
+
+/* 数字输入框 */
+
+.number-input {
+
+  flex: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  overflow: hidden;
+
+  background: white;
+}
+
+/* 输入框 */
+
+.number-input input {
+
+  flex: 1;
+
+  height: 38px;
+
+  border: none;
+
+  text-align: center;
+
+  outline: none;
+
+  background: white;
+
+  color: #303133;
+}
+
+/* 去掉原生箭头 */
+
+.number-input input::-webkit-outer-spin-button,
+.number-input input::-webkit-inner-spin-button {
+
+  -webkit-appearance: none;
+
+  margin: 0;
+}
+
+.number-input input[type="number"] {
+
+  -moz-appearance: textfield;
+}
+
+/* 按钮 */
+
+.number-btn {
+
+  width: 38px;
+
+  height: 38px;
+
+  border: none;
+
+  background: #eef2f6;
+
+  color: #606266;
+
+  cursor: pointer;
+
+  font-size: 18px;
+
+  transition: 0.2s;
+}
+
+.number-btn:hover {
+
+  background: #dbe4ee;
+
+  color: #1677ff;
 }
 
 </style>

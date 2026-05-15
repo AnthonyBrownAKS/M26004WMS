@@ -1,25 +1,27 @@
 package com.m26004wms.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inbound;
+import com.m26004wms.mapper.InboundMapper;
 import com.m26004wms.service.InboundService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.annotation.Resource;
 
 @RestController
 @RequestMapping("/inbound")
 public class InboundController {
 
-    @Resource
+    @Autowired
     private InboundService inboundService;
+
+    @Autowired
+    private InboundMapper inboundMapper;
 
     /**
      * 分页查询
      */
     @GetMapping("/page")
-    public Result<Page<Inbound>> pageQuery(
+    public Result<Object> pageQuery(
 
             @RequestParam Integer current,
             @RequestParam Integer size,
@@ -32,7 +34,7 @@ public class InboundController {
 
     ) {
 
-        Page<Inbound> page =
+        Object page =
                 inboundService.pageQuery(
 
                         current,
@@ -56,32 +58,16 @@ public class InboundController {
     }
 
     /**
-     * 新增
+     * 新增或修改
      */
-    @PostMapping("/add")
+    @PutMapping("/add")
     public Result<String> add(
 
             @RequestBody Inbound inbound
 
     ) {
 
-        inboundService.save(inbound);
-
-        return Result.success();
-
-    }
-
-    /**
-     * 修改
-     */
-    @PutMapping("/update")
-    public Result<String> update(
-
-            @RequestBody Inbound inbound
-
-    ) {
-
-        inboundService.updateById(inbound);
+        inboundMapper.insertOrUpdate(inbound);
 
         return Result.success();
 
@@ -91,34 +77,17 @@ public class InboundController {
      * 删除
      */
     @DeleteMapping("/delete/{id}")
-    public Result<String> delete(
-
-            @PathVariable Long id
-
-    ) {
-
-        inboundService.removeById(id);
-
+    public Result<String> delete(@PathVariable Long id) {
+        inboundMapper.deleteById(id);
         return Result.success();
-
     }
 
     /**
      * ID查询
      */
     @GetMapping("/{id}")
-    public Result<Inbound> getById(
-
-            @PathVariable Long id
-
-    ) {
-
-        return Result.success(
-
-                inboundService.getById(id)
-
-        );
-
+    public Result<Inbound> getById(@PathVariable Long id) {
+        return Result.success(inboundMapper.selectById(id));
     }
 
 }

@@ -2,7 +2,9 @@ package com.m26004wms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.common.Result;
+import com.m26004wms.entity.Inbound;
 import com.m26004wms.entity.Outbound;
+import com.m26004wms.mapper.OutboundMapper;
 import com.m26004wms.service.OutboundService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +14,16 @@ import org.springframework.web.bind.annotation.*;
 public class OutboundController {
 
     @Autowired
-    private
-    OutboundService outboundService;
+    private OutboundService outboundService;
+
+    @Autowired
+    private OutboundMapper outboundMapper;
 
     /**
      * 分页条件查询
      */
     @GetMapping("/page")
-    public Result<Page<Outbound>> page(
+    public Result<Object> page(
             @RequestParam Integer current,
             @RequestParam Integer size,
 
@@ -30,15 +34,24 @@ public class OutboundController {
             @RequestParam(required = false) String customerCode
     ) {
 
-        Page<Outbound> page = outboundService.pageQuery(
-                current,
-                size,
-                materialCode,
-                materialName,
-                containerId,
-                batch,
-                customerCode
-        );
+        Object page =
+                outboundService.pageQuery(
+
+                        current,
+
+                        size,
+
+                        materialCode,
+
+                        materialName,
+
+                        containerId,
+
+                        batch,
+
+                        customerCode
+
+                );
 
         return Result.success(page);
     }
@@ -49,29 +62,17 @@ public class OutboundController {
     @GetMapping("/{id}")
     public Result<Outbound> getById(@PathVariable Long id) {
 
-        return Result.success(outboundService.getById(id));
+        return Result.success(outboundMapper.selectById(id));
     }
 
     /**
-     * 新增
+     * 新增或修改
      */
-    @PostMapping
-    public Result<String> save(@RequestBody Outbound outbound) {
-
-        outboundService.save(outbound);
-
+    @PutMapping("/add")
+    public Result<String> add(@RequestBody Outbound outbound) {
+        outboundMapper.insertOrUpdate(outbound);
         return Result.success();
-    }
 
-    /**
-     * 修改
-     */
-    @PutMapping
-    public Result<String> update(@RequestBody Outbound outbound) {
-
-        outboundService.updateById(outbound);
-
-        return Result.success();
     }
 
     /**
@@ -79,9 +80,7 @@ public class OutboundController {
      */
     @DeleteMapping("/{id}")
     public Result<String> delete(@PathVariable Long id) {
-
-        outboundService.removeById(id);
-
+        outboundMapper.deleteById(id);
         return Result.success();
     }
 }

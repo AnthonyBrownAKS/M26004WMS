@@ -17,4 +17,9 @@ public interface CustomerSupplierService {
      */
     List<CustomerSupplier> exportAll();
 
+    /**
+     * 分页查询
+     */
+    Object page(Integer current, Integer size, String code);
+
 }

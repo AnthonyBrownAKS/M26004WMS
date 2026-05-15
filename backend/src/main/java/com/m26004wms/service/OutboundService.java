@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.m26004wms.entity.Outbound;
 
-public interface OutboundService extends IService<Outbound> {
+public interface OutboundService {
 
-    Page<Outbound> pageQuery(
+    Object pageQuery(
             Integer current,
             Integer size,
             String materialCode,

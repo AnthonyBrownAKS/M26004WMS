@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.m26004wms.entity.Inbound;
 
-public interface InboundService
-        extends IService<Inbound> {
+import java.util.List;
 
-    Page<Inbound> pageQuery(
+public interface InboundService {
+
+    Object pageQuery(
 
             Integer current,
 

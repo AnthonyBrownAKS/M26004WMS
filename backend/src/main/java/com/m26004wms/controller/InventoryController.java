@@ -3,13 +3,14 @@ package com.m26004wms.controller;
 
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inventory;
+import com.m26004wms.entity.InventoryData;
+import com.m26004wms.entity.Material;
 import com.m26004wms.mapper.InventoryMapper;
+import com.m26004wms.service.InventoryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,57 +21,26 @@ import java.util.Map;
 public class InventoryController {
 
     private final InventoryMapper inventoryMapper;
+    private final InventoryService inventoryService;
 
-    @GetMapping("/pages")
-    public Map<String, Object> pages(
+    /**
+     * 分页查询
+     */
+    @GetMapping("/page")
+    public Result<Object> page(
 
-            @RequestParam Long current,
+            @RequestParam Integer current,
 
-            @RequestParam Long size
+            @RequestParam Integer size,
 
+            @RequestParam(required = false) String containerId
     ) {
 
-        // 计算跳过多少数据
+        return Result.success(inventoryService.page(current, size, containerId));
 
-        Long offset =
-                (current - 1) * size;
-
-        // 分页数据
-
-        List<Inventory> inventory =
-
-                inventoryMapper.selectPage(
-                        offset,
-                        size
-                );
-
-        // 总数
-
-        Long total =
-                inventoryMapper.selectCount();
-
-        // 总页数
-
-        Long pages =
-                (total + size - 1) / size;
-
-        // 返回
-
-        Map<String, Object> result =
-                new HashMap<>();
-
-        result.put("records", inventory);
-
-        result.put("current", current);
-
-        result.put("pages", pages);
-
-        result.put("size", size);
-
-        result.put("total", total);
-
-        return result;
     }
+
+
 
     /**
      * 查询库存
@@ -105,4 +75,41 @@ public class InventoryController {
                 inventory
         );
     }
+
+    /**
+     * 新增/修改
+     * 传入 materialCode, containerId, customerCode, quantity, batch, locationAreaId, rowNo, columnNo
+     * 绑定关系 + 添加库存
+     */
+    @PostMapping("/add")
+    public Result<String> add(@RequestBody InventoryData inventoryData) {
+        try {
+            inventoryService.add(inventoryData);
+            return Result.success();
+        }catch (Exception e){
+            return Result.fail(e.getMessage());
+        }
+    }
+
+
+
+    /**
+     * 获取详细数据
+     */
+    @GetMapping("/list/{containerId}")
+    public Result<List<InventoryData>> getData(@PathVariable String containerId){
+        return Result.success(inventoryService.getData(containerId));
+
+    }
+
+    /**
+     * 删除库存数据和绑定表对应数据
+     */
+    @DeleteMapping("/{id}")
+    public Result<String> delInventory(@PathVariable int id){
+        inventoryService.del(id);
+        return Result.success();
+    }
+
+
 }

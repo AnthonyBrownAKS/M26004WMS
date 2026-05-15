@@ -18,4 +18,17 @@ public interface LocationMapper extends BaseMapper<Location> {
 
     @Select("SELECT * FROM location WHERE LocationAreaId = #{locationAreaId}")
     Location selectLocationByLocationAreaId(@Param("locationAreaId") String locationAreaId);
+
+    @Select("""
+            SELECT Id
+            FROM location
+            WHERE LocationAreaId = #{locationAreaId}
+            AND `Row` = #{rowNo}
+            AND `Column` = #{columnNo}
+            """)
+    String selectLocationId(
+            @Param("locationAreaId") String locationAreaId,
+            @Param("rowNo") int rowNo,
+            @Param("columnNo") int columnNo
+    );
 }

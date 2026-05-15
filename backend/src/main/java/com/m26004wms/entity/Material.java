@@ -33,5 +33,4 @@ public class Material {
 
     private LocalDateTime creationTime;
 
-    private String ContainerId;
 }

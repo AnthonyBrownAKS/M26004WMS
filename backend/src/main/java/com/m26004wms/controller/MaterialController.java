@@ -1,20 +1,26 @@
 package com.m26004wms.controller;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.common.Result;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
 import com.m26004wms.entity.MaterialContainer;
+import com.m26004wms.entity.Outbound;
 import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.MaterialMapper;
 import com.m26004wms.service.MaterialService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/material")
@@ -79,18 +85,75 @@ public class MaterialController {
     }
 
     /**
-     * 物料下拉框
+     * 分页查询
+     */
+    @GetMapping("/page")
+    public Result<Object> page(
+
+            @RequestParam Integer current,
+
+            @RequestParam Integer size,
+
+            @RequestParam(required = false) String code
+    ) {
+
+        return Result.success(materialService.page(current, size, code));
+
+    }
+
+    /**
+     * 查询全部
      */
     @GetMapping("/list")
-    public Result<Object> list() {
+    public Result<List<Material>> list() {
 
-        return Result.success(
+        return Result.success(materialService.list());
 
-                "查询成功",
+    }
 
-                materialMapper.listMaterials()
+    /**
+     * 根据code查询
+     */
+    @PostMapping("/search/{code}")
+    public Result<Material> search(
+            @PathVariable String code
+    ) {
 
-        );
+        Material material = materialMapper.getByCustomerCode(code);
+
+        return Result.success(material);
+
+    }
+
+    /**
+     * 新增/修改
+     */
+    @PostMapping("/add")
+    public Result<String> add(
+            @RequestBody Material material
+    ) {
+
+        material.setShortCode(material.getCode());
+        material.setCreationTime(LocalDateTime.now());
+
+        materialMapper.insertOrUpdate(material);
+
+        return Result.success();
+
+    }
+
+    /**
+     * 删除
+     */
+    @DeleteMapping("/{id}")
+    public Result<String> delete(
+            @PathVariable String id
+    ) {
+
+        materialMapper.deleteById(id);
+
+        return Result.success();
+
     }
 
     @GetMapping("/customer")
@@ -116,5 +179,7 @@ public class MaterialController {
     public Result<List<MaterialContainer>> getMaterialContainer(){
         return Result.success(materialContainerMapper.selectList(null));
     }
+
+
 
 }

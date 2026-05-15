@@ -2,6 +2,7 @@ package com.m26004wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.m26004wms.entity.Inventory;
+import com.m26004wms.entity.MaterialContainer;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -48,6 +49,16 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
             select *
 
             from inventory
+            
+            where
+
+            (
+                #{containerId} is null
+                or
+                #{containerId} = ''
+                or
+                container_id like concat('%', #{containerId}, '%')
+            )
 
             order by creation_time desc
 
@@ -55,8 +66,9 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
 
             """)
     List<Inventory> selectPage(
-            @Param("offset") Long offset,
-            @Param("size") Long size
+            @Param("offset") int offset,
+            @Param("size") int size,
+            @Param("containerId") String containerId
     );
 
     /**
@@ -67,9 +79,19 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
             select count(*)
 
             from inventory
+            
+            where
+
+            (
+                #{containerId} is null
+                or
+                #{containerId} = ''
+                or
+                container_id like concat('%', #{containerId}, '%')
+            )
 
             """)
-    Long selectCount();
+    int selectCount(@Param("containerId") String containerId);
 
 
     /**
@@ -103,5 +125,28 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
             String batch
 
     );
+
+
+    /**
+     * 通过containerId获取所有物料信息
+     */
+    @Select("""
+        SELECT *
+        FROM material_container
+        WHERE container_id = #{containerId}
+    """)
+    List<MaterialContainer> getData(@Param("containerId") String containerId);
+
+
+    /**
+     * 检查是否有重复容器
+     */
+    @Select("""
+        SELECT *
+        FROM inventory
+        WHERE container_id = #{containerId}
+    """)
+    List<Inventory> exitContainer(@Param("containerId") String containerId);
+
 
 }

@@ -6,60 +6,60 @@ import lombok.Data;
 @Data
 public class CustomerSupplierExcelDTO {
 
-    @ExcelProperty("WarehouseId")
+    @ExcelProperty("warehouseId")
     private String warehouseId;
 
-    @ExcelProperty("Name")
+    @ExcelProperty("name")
     private String name;
 
-    @ExcelProperty("Code")
+    @ExcelProperty("code")
     private String code;
 
-    @ExcelProperty("Address")
+    @ExcelProperty("address")
     private String address;
 
-    @ExcelProperty("Email")
+    @ExcelProperty("email")
     private String email;
 
-    @ExcelProperty("Phone")
+    @ExcelProperty("phone")
     private String phone;
 
-    @ExcelProperty("IsCustomer")
+    @ExcelProperty("isCustomer")
     private Boolean isCustomer;
 
-    @ExcelProperty("IsSupplier")
+    @ExcelProperty("isSupplier")
     private Boolean isSupplier;
 
-    @ExcelProperty("IsOwner")
+    @ExcelProperty("isOwner")
     private Boolean isOwner;
 
-    @ExcelProperty("IsDeleted")
+    @ExcelProperty("is_deleted")
     private Boolean isDeleted;
 
-    @ExcelProperty("DeleterId")
+    @ExcelProperty("deleterId")
     private String deleterId;
 
-    @ExcelProperty("DeletionTime")
+    @ExcelProperty("deletionTime")
     private String deletionTime;
 
-    @ExcelProperty("LastModificationTime")
+    @ExcelProperty("lastModificationTime")
     private String lastModificationTime;
 
-    @ExcelProperty("LastModifierId")
+    @ExcelProperty("lastModifierId")
     private String lastModifierId;
 
-    @ExcelProperty("CreationTime")
+    @ExcelProperty("creationTime")
     private String creationTime;
 
-    @ExcelProperty("CreatorId")
+    @ExcelProperty("creatorId")
     private String creatorId;
 
-    @ExcelProperty("ExtraProperties")
+    @ExcelProperty("extraProperties")
     private String extraProperties;
 
-    @ExcelProperty("ConcurrencyStamp")
+    @ExcelProperty("concurrencyStamp")
     private String concurrencyStamp;
 
-    @ExcelProperty("Id")
+    @ExcelProperty("id")
     private String id;
 }
