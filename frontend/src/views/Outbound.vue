@@ -989,6 +989,8 @@ onMounted(() => {
 .outbound-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 }
 
 .card {
@@ -1016,6 +1018,8 @@ onMounted(() => {
   font-size: 18px;
 
   font-weight: bold;
+
+  color: #303133;
 
   margin-bottom: 20px;
 }

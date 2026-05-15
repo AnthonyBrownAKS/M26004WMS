@@ -11,7 +11,7 @@
       <div class="table-header">
 
         <div class="card-title">
-          客商管理
+          客商管理CUSTOMER
         </div>
 
         <div class="header-actions">
@@ -740,6 +740,8 @@ onMounted(() => {
 .material-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 }
 
 /* 卡片 */

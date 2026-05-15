@@ -715,6 +715,8 @@ onMounted(() => {
 .inbound-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 }
 
 .card {
@@ -755,6 +757,8 @@ onMounted(() => {
   margin-bottom: 20px;
 
   font-weight: bold;
+
+  color: #303133;
 }
 
 .search-bar {

@@ -9,7 +9,7 @@
       <div class="table-header">
 
         <div class="card-title">
-          库存管理
+          库存管理INVENTORY
         </div>
 
         <div class="header-actions">
@@ -992,6 +992,8 @@ onMounted(() => {
 .material-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 
 }
 

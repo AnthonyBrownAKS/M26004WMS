@@ -11,7 +11,7 @@
       <div class="table-header">
 
         <div class="card-title">
-          物料管理
+          物料管理MATERIAL
         </div>
 
         <div class="header-actions">
@@ -825,6 +825,8 @@ onMounted(() => {
 .material-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 }
 
 /* 卡片 */

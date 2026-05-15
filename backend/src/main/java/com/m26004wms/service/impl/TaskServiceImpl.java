@@ -114,6 +114,7 @@ public class TaskServiceImpl implements TaskService {
             // taskQueue.addTask(task);
             taskMapper.insert(task);
 
+
             return task.getTaskId();
         }catch (Exception e){
             return null;

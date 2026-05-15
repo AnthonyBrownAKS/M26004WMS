@@ -9,7 +9,7 @@
       <div class="table-header">
 
         <div class="card-title">
-          任务管理
+          任务管理TASK
         </div>
 
 
@@ -678,6 +678,8 @@ onMounted(() => {
 .task-query-page {
 
   padding: 20px;
+
+  background: #eef2f6;
 }
 
 .card {
