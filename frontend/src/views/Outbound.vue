@@ -267,7 +267,7 @@
             <button
                 type="button"
                 class="number-btn"
-                @click="editForm.quantity--"
+                @click="form.quantity--"
             >
               -
             </button>
@@ -275,28 +275,24 @@
             <input
                 id="quantityInput"
                 type="number"
-                v-model="editForm.quantity"
+                v-model="form.quantity"
                 @keyup.enter="focusById('batchInput')"
             >
 
             <button
                 type="button"
                 class="number-btn"
-                @click="editForm.quantity++"
+                @click="form.quantity++"
             >
               +
             </button>
-
           </div>
-
         </div>
 
 
         <!-- 批次 -->
 
         <div class="form-item">
-
-
           <label>
             批次号：
           </label>
@@ -309,11 +305,7 @@
               @blur="searchInventory"
               @keyup.enter="focusById('quantityInput')"
           />
-
         </div>
-
-
-
       </div>
 
       <!-- 按钮 -->
@@ -322,7 +314,7 @@
 
         <button
             class="scan-btn"
-            @click="focusMaterial"
+            @click="openScanDialog"
         >
           扫一扫
         </button>
@@ -470,6 +462,85 @@
 
     </div>
 
+
+    <!-- 人工扫码 -->
+
+    <div
+        v-if="scanVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog scan-dialog">
+
+        <div class="dialog-header">
+
+          <div class="dialog-title">
+            人工扫码录入
+          </div>
+
+        </div>
+
+        <div class="dialog-form">
+
+          <!-- 物料码 -->
+
+          <div class="dialog-item">
+
+            <label>
+              物料码
+            </label>
+
+            <input
+                v-model="scanMaterial"
+                placeholder="
+客商代码,物料代码,数量
+"
+            >
+
+          </div>
+
+          <!-- 容器 -->
+
+          <div class="dialog-item">
+
+            <label>
+              容器码
+            </label>
+
+            <input
+                v-model="scanContainer"
+                placeholder="
+容器ID
+"
+            >
+
+          </div>
+
+        </div>
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="confirmScan"
+          >
+            确定
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="scanVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
     <!-- 删除弹窗 -->
 
     <div
@@ -525,6 +596,11 @@ const batchRef = ref()
 const submitRef = ref()
 
 /* 表格 */
+const scanVisible = ref(false)
+
+const scanMaterial = ref('')
+
+const scanContainer = ref('')
 
 const outboundList = ref([])
 
@@ -553,6 +629,16 @@ const query = ref({
   customerCode: ''
 
 })
+
+const openScanDialog = () => {
+
+  scanMaterial.value = ''
+
+  scanContainer.value = ''
+
+  scanVisible.value = true
+
+}
 
 const handleMaterialInput = (e) => {
 
@@ -615,6 +701,75 @@ const form = ref({
 
 })
 
+
+const confirmScan = async () => {
+
+  try {
+
+    const arr =
+        scanMaterial.value.split(',')
+
+    if (arr.length < 3) {
+
+      showMessage(
+          '物料码格式错误',
+          'error'
+      )
+
+      return
+
+    }
+
+    // 客商代码
+
+    form.value.customerCode =
+        arr[0].trim()
+
+    // 物料代码
+
+    form.value.materialCode =
+        arr[1].trim()
+
+    // 数量
+
+    form.value.quantity =
+        Number(arr[2].trim())
+
+    // 容器ID
+
+    form.value.containerId =
+        scanContainer.value.trim()
+
+    // 批次号
+    const res = await axios.post(
+        '/api/outbound/batch',
+        {
+            materialCode: form.value.materialCode,
+            containerId: form.value.containerId
+        }
+    )
+
+    form.value.batch = res.data.data.batch
+
+    scanVisible.value = false
+
+    showMessage(
+        '扫码填充成功',
+        'success'
+    )
+
+  } catch (e) {
+
+    console.error(e)
+
+    showMessage(
+        '扫码解析失败',
+        'error'
+    )
+
+  }
+
+}
 
 
 /* 修改 */
@@ -1948,6 +2103,23 @@ button:focus {
   background: #dbe4ee;
 
   color: #1677ff;
+}
+
+
+.scan-btn:hover {
+
+  opacity: 0.9;
+}
+
+.scan-dialog {
+
+  width: 520px;
+
+  background: white;
+
+  border-radius: 10px;
+
+  overflow: hidden;
 }
 
 </style>

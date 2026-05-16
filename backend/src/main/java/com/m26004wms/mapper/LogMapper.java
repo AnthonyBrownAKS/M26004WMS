@@ -2,6 +2,7 @@ package com.m26004wms.mapper;
 
 import com.m26004wms.entity.Logs;
 import com.m26004wms.entity.Material;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -64,6 +65,109 @@ public interface LogMapper {
             String endTime
     );
 
+
+
+    @Insert("""
+
+            INSERT INTO wcs_log(
+
+                type,
+                param,
+                result,
+                creation_time
+
+            )
+
+            VALUES(
+
+                #{type},
+                #{param},
+                #{result},
+                NOW()
+
+            )
+
+            """)
+    void insertWcs(Logs apilog);
+
+
+
+    /**
+     * 分页
+     */
+    @Select("""
+
+            SELECT
+                *
+            FROM
+                control_log
+            WHERE
+                creation_time >= #{startTime}
+                AND
+                creation_time <= #{endTime}
+            ORDER BY
+                creation_time DESC
+            
+            limit #{offset}, #{size}
+
+            """)
+    List<Logs> selectPageControl(
+            @Param("offset")
+            int offset,
+
+            @Param("size")
+            int size,
+
+            @Param("startTime")
+            String startTime,
+
+            @Param("endTime")
+            String endTime
+    );
+
+    @Select("""
+
+            SELECT
+                COUNT(*)
+            FROM
+                control_log
+            WHERE
+                creation_time >= #{startTime}
+                AND
+                creation_time <= #{endTime}
+
+            """)
+    Long selectCountControl(
+            @Param("startTime")
+            String startTime,
+
+            @Param("endTime")
+            String endTime
+    );
+
+
+    @Insert("""
+
+            INSERT INTO control_log(
+
+                type,
+                param,
+                result,
+                creation_time
+
+            )
+
+            VALUES(
+
+                #{type},
+                #{param},
+                #{result},
+                NOW()
+
+            )
+
+            """)
+    void insertControl(Logs apilog);
 
 
 }

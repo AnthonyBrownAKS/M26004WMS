@@ -166,6 +166,8 @@
         入库管理
       </div>
 
+
+
       <div class="form-grid">
 
         <!-- 物料 -->
@@ -245,7 +247,7 @@
 
         <button
             class="scan-btn"
-            @click="focusScan"
+            @click="openScanDialog"
         >
           扫一扫
         </button>
@@ -392,6 +394,85 @@
 
     </div>
 
+
+    <!-- 人工扫码 -->
+
+    <div
+        v-if="scanVisible"
+        class="dialog-mask"
+    >
+
+      <div class="dialog scan-dialog">
+
+        <div class="dialog-header">
+
+          <div class="dialog-title">
+            人工扫码录入
+          </div>
+
+        </div>
+
+        <div class="dialog-form">
+
+          <!-- 物料码 -->
+
+          <div class="dialog-item">
+
+            <label>
+              物料码
+            </label>
+
+            <input
+                v-model="scanMaterial"
+                placeholder="
+客商代码,物料代码,数量
+"
+            >
+
+          </div>
+
+          <!-- 容器 -->
+
+          <div class="dialog-item">
+
+            <label>
+              容器码
+            </label>
+
+            <input
+                v-model="scanContainer"
+                placeholder="
+容器ID
+"
+            >
+
+          </div>
+
+        </div>
+
+        <div class="dialog-buttons">
+
+          <button
+              class="dialog-confirm-btn"
+              @click="confirmScan"
+          >
+            确定
+          </button>
+
+          <button
+              class="dialog-cancel-btn"
+              @click="scanVisible = false"
+          >
+            取消
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
     <!-- 删除 -->
 
     <div
@@ -446,6 +527,12 @@ const showMessage =
 
 const inboundList = ref([])
 
+const scanVisible = ref(false)
+
+const scanMaterial = ref('')
+
+const scanContainer = ref('')
+
 const current = ref(1)
 
 const pages = ref(1)
@@ -473,6 +560,75 @@ const query = ref({
   customerCode: ''
 
 })
+
+const openScanDialog = () => {
+
+  scanMaterial.value = ''
+
+  scanContainer.value = ''
+
+  scanVisible.value = true
+
+}
+
+const confirmScan = () => {
+
+  try {
+
+    const arr = scanMaterial.value.split(',')
+
+    if (arr.length < 3) {
+
+      showMessage(
+          '物料码格式错误',
+          'error'
+      )
+
+      return
+
+    }
+
+    alert(arr[0].trim())
+
+    // 客商代码
+
+    form.value.customerCode =
+        arr[0].trim()
+
+    // 物料代码
+
+    form.value.materialCode =
+        arr[1].trim()
+
+    // 数量
+
+    form.value.quantity =
+        Number(arr[2].trim())
+
+    // 容器ID
+
+    form.value.containerId =
+        scanContainer.value.trim()
+
+    scanVisible.value = false
+
+    showMessage(
+        '扫码填充成功',
+        'success'
+    )
+
+  } catch (e) {
+
+    console.error(e)
+
+    showMessage(
+        '扫码解析失败',
+        'error'
+    )
+
+  }
+
+}
 
 const form = ref({
 
@@ -748,6 +904,41 @@ onMounted(() => {
   font-size: 14px;
 
   background: #f5f7fb;
+}
+
+.scan-btn {
+
+  min-width: 110px;
+
+  height: 40px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: #13c2c2;
+
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.scan-btn:hover {
+
+  opacity: 0.9;
+}
+
+.scan-dialog {
+
+  width: 520px;
+
+  background: white;
+
+  border-radius: 10px;
+
+  overflow: hidden;
 }
 
 .card-title {

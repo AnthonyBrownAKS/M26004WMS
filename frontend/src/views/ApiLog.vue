@@ -1,6 +1,6 @@
 <template>
 
-  <div class="api-log-page">
+  <div class="control-log-page">
 
     <div class="card table-card">
 
@@ -55,13 +55,25 @@
 
           <tr>
 
-            <th>方向</th>
+            <th style="width: 80px">
+              ID
+            </th>
 
-            <th>传入数据</th>
+            <th style="width: 120px">
+              操作类型
+            </th>
 
-            <th>传出数据</th>
+            <th>
+              更改数据
+            </th>
 
-            <th>调用日期</th>
+            <th>
+              操作结果
+            </th>
+
+            <th style="width: 200px">
+              创建日期
+            </th>
 
           </tr>
 
@@ -74,6 +86,18 @@
               :key="item.id"
           >
 
+            <!-- ID -->
+
+            <td>
+
+              <div class="id-text">
+
+                {{ item.id }}
+
+              </div>
+
+            </td>
+
             <!-- 类型 -->
 
             <td>
@@ -81,11 +105,13 @@
               <div
                   class="type-tag"
                   :class="{
-                    inbound:
+
+                    insert:
                     item.type === 'INBOUND',
 
-                    outbound:
-                    item.type === 'OUTBOUND'
+                    delete:
+                    item.type === 'OUTBOUND',
+
                   }"
               >
 
@@ -111,7 +137,7 @@
 
             <td>
 
-              <div class="json-box">
+              <div class="result-box">
 
                 {{ item.result }}
 
@@ -140,7 +166,7 @@
               :key="'empty-' + n"
           >
 
-            <td colspan="4"></td>
+            <td colspan="5"></td>
 
           </tr>
 
@@ -262,7 +288,7 @@ const loadLogList = async () => {
 
     console.error(e)
 
-    showMessage('日志加载失败', 'error')
+    showMessage('操作日志加载失败', 'error')
 
   }
 
@@ -328,12 +354,11 @@ onMounted(() => {
 
 <style scoped>
 
-.api-log-page {
+.control-log-page {
 
   padding: 20px;
 
   background: #eef2f6;
-
 }
 
 /* 卡片 */
@@ -507,39 +532,89 @@ onMounted(() => {
 
 .log-table td {
 
-  padding: 10px;
+  padding: 8px 10px;
 
   border-bottom: 1px solid #edf1f5;
 
   text-align: center;
 
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+.log-table tbody tr {
+
+  height: 72px;
+
+  transition: 0.15s;
+}
+
+.log-table tbody tr:hover {
+
+  background: #f5f9ff;
+}
+
+/* ID */
+
+.id-text {
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  color: #4b5563;
 }
 
 /* 类型标签 */
 
 .type-tag {
 
+  width: 92px;
+
+  height: 28px;
+
+  border-radius: 4px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
   display: inline-flex;
 
   align-items: center;
 
   justify-content: center;
+}
 
-  min-width: 92px;
+.time-text {
 
-  height: 30px;
-
-  border-radius: 4px;
+  justify-content: center;
 
   font-size: 12px;
 
-  font-weight: bold;
+  color: #606266;
 
-  letter-spacing: 1px;
+  font-weight: 600;
+
+  white-space: nowrap;
 }
 
-.inbound {
+.log-table th {
+
+  text-align: center;
+
+  vertical-align: middle;
+}
+
+.insert {
+
+  background: rgba(82,196,26,0.12);
+
+  color: #52c41a;
+
+  border: 1px solid rgba(82,196,26,0.25);
+}
+
+.update {
 
   background: rgba(22,119,255,0.12);
 
@@ -548,38 +623,48 @@ onMounted(() => {
   border: 1px solid rgba(22,119,255,0.25);
 }
 
-.outbound {
+.delete {
 
-  background: rgba(255,122,69,0.12);
+  background: rgba(245,108,108,0.12);
 
-  color: #ff7a45;
+  color: #f56c6c;
 
-  border: 1px solid rgba(255,122,69,0.25);
+  border: 1px solid rgba(245,108,108,0.25);
 }
 
-/* JSON框 */
+.select {
 
-.json-box {
+  background: rgba(255,170,0,0.12);
 
-  max-height: 130px;
+  color: #ff9900;
 
-  overflow: auto;
+  border: 1px solid rgba(255,170,0,0.25);
+}
 
-  padding: 10px 12px;
+/* 数据框 */
 
-  border-radius: 6px;
+.json-box,
+.result-box {
 
-  background: #f4f7fb;
+  max-height: 56px;
 
-  border: 1px solid #d8dee8;
+  overflow-y: auto;
+
+  padding: 6px 8px;
+
+  border-radius: 4px;
+
+  background: #f7f9fc;
+
+  border: 1px solid #dbe2ea;
 
   color: #394150;
 
   text-align: left;
 
-  font-size: 12px;
+  font-size: 11px;
 
-  line-height: 1.5;
+  line-height: 1.35;
 
   font-family:
       Consolas,
@@ -589,25 +674,34 @@ onMounted(() => {
   white-space: pre-wrap;
 
   word-break: break-all;
+
+  box-sizing: border-box;
 }
 
-.json-box:hover {
+.json-box,
+.result-box,
+.time-text,
+.id-text {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.json-box,
+.result-box {
+
+  justify-content: flex-start;
+}
+
+.json-box:hover,
+.result-box:hover {
 
   border-color: #1677ff;
 
   background: #f8fbff;
-}
-
-.log-table tbody tr {
-
-  height: 88px;
-
-  transition: 0.15s;
-}
-
-.log-table tbody tr:hover {
-
-  background: #f5f9ff;
 }
 
 /* 时间 */
@@ -662,14 +756,16 @@ onMounted(() => {
 
 /* 滚动条 */
 
-.json-box::-webkit-scrollbar {
+.json-box::-webkit-scrollbar,
+.result-box::-webkit-scrollbar {
 
   width: 6px;
 
   height: 6px;
 }
 
-.json-box::-webkit-scrollbar-thumb {
+.json-box::-webkit-scrollbar-thumb,
+.result-box::-webkit-scrollbar-thumb {
 
   background: #4b5563;
 

@@ -25,4 +25,15 @@ public interface MaterialContainerMapper extends BaseMapper<com.m26004wms.entity
         LIMIT 1
     """)
     MaterialContainer selectByContainerId(@Param("containerId") String containerId);
+
+    @Select("""
+        SELECT *
+        FROM material_container
+        WHERE container_id = #{containerId}
+        AND material_code = #{materialCode}
+    """)
+    MaterialContainer getBatch(@Param("materialCode") String materialCode, @Param("containerId") String containerId);
+
+
+
 }

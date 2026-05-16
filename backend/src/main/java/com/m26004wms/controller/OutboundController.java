@@ -3,7 +3,9 @@ package com.m26004wms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inbound;
+import com.m26004wms.entity.MaterialContainer;
 import com.m26004wms.entity.Outbound;
+import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.OutboundMapper;
 import com.m26004wms.service.OutboundService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,9 @@ public class OutboundController {
 
     @Autowired
     private OutboundMapper outboundMapper;
+
+    @Autowired
+    private MaterialContainerMapper materialContainerMapper;
 
     /**
      * 分页条件查询
@@ -83,4 +88,10 @@ public class OutboundController {
         outboundMapper.deleteById(id);
         return Result.success();
     }
+
+    @PostMapping("/batch")
+    public Result<MaterialContainer> getBatch(@RequestBody MaterialContainer materialContainer){
+        return Result.success(materialContainerMapper.getBatch(materialContainer.getMaterialCode(), materialContainer.getContainerId()));
+    }
+
 }

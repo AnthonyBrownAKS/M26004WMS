@@ -2,7 +2,9 @@ package com.m26004wms.controller;
 
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inbound;
+import com.m26004wms.entity.Logs;
 import com.m26004wms.mapper.InboundMapper;
+import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.service.InboundService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,9 @@ public class InboundController {
 
     @Autowired
     private InboundMapper inboundMapper;
+
+    @Autowired
+    private LogMapper logMapper;
 
     /**
      * 分页查询
@@ -61,16 +66,17 @@ public class InboundController {
      * 新增或修改
      */
     @PutMapping("/add")
-    public Result<String> add(
-
-            @RequestBody Inbound inbound
-
-    ) {
-
+    public Result<String> add(@RequestBody Inbound inbound) {
         inboundMapper.insertOrUpdate(inbound);
 
-        return Result.success();
+        // 操作日志
+        Logs log = new Logs();
+        log.setType("INSERT");
+        log.setResult("SUCCESS");
+        log.setParam("ADD OR UPDATE DATA INTO INBOUND :" + inbound.getId());
+        logMapper.insertControl(log);
 
+        return Result.success();
     }
 
     /**
@@ -79,6 +85,14 @@ public class InboundController {
     @DeleteMapping("/delete/{id}")
     public Result<String> delete(@PathVariable Long id) {
         inboundMapper.deleteById(id);
+
+        // 操作日志
+        Logs log = new Logs();
+        log.setType("DELETE");
+        log.setResult("SUCCESS");
+        log.setParam("DELETE DATA IN INBOUND: " + id);
+        logMapper.insertControl(log);
+
         return Result.success();
     }
 
@@ -87,7 +101,16 @@ public class InboundController {
      */
     @GetMapping("/{id}")
     public Result<Inbound> getById(@PathVariable Long id) {
-        return Result.success(inboundMapper.selectById(id));
+        Inbound in = inboundMapper.selectById(id);
+
+        // 操作日志
+        Logs log = new Logs();
+        log.setType("SELECT");
+        log.setResult(in.toString());
+        log.setParam("GET DATA BY ID FROM INBOUND: " + id);
+        logMapper.insertControl(log);
+
+        return Result.success(in);
     }
 
 }

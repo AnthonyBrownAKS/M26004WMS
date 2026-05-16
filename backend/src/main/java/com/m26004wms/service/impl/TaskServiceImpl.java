@@ -173,10 +173,6 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public String createOutboundTask(MaterialContainer materialContainer) {
-        // 判断是否存在重复库存
-        if (taskMapper.existsCreatedTask(materialContainer.getContainerId()) > 0){
-            return null;
-        }
 
         // 接受任务
         Task task = new Task();

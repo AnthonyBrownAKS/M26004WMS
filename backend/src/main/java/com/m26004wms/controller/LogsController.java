@@ -33,6 +33,24 @@ public class LogsController {
 
     }
 
+    @GetMapping("/controlLog")
+    public Result<Object> pageControl(
+
+            @RequestParam Integer current,
+
+            @RequestParam Integer size,
+
+            @RequestParam(required = false)
+            String startTime,
+
+            @RequestParam(required = false)
+            String endTime
+    ) {
+
+        return Result.success(logService.pageControl(current, size, startTime, endTime));
+
+    }
+
 
 
 }

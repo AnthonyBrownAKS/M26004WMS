@@ -1,6 +1,7 @@
 package com.m26004wms.controller;
 
 import com.m26004wms.entity.*;
+import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.TaskMapper;
 import com.m26004wms.service.TaskService;
 import com.m26004wms.common.Result;
@@ -18,6 +19,9 @@ public class TaskController {
 
     @Autowired
     private TaskMapper taskMapper;
+
+    @Autowired
+    private LogMapper logMapper;
 
     /**
      * 绑定程序√
@@ -40,6 +44,14 @@ public class TaskController {
         System.out.println(code);
         Location location = taskService.getLocation();
         if (location == null) return Result.fail("货位没有空位!");
+
+        // WCS日志
+        Logs log = new Logs();
+        log.setType("INBOUND");
+        log.setParam("收到CODE: " + code);
+        log.setResult("库位ID: " + location.getId());
+        logMapper.insertWcs(log);
+
         return Result.success(location);
     }
 
@@ -50,6 +62,14 @@ public class TaskController {
      */
     @PostMapping("/finishedInbound")
     public Result<String> taskFinished(@RequestBody Inventory inventory){
+
+        // WCS日志
+        Logs log = new Logs();
+        log.setType("INBOUND");
+        log.setParam("库存ID: " + inventory.getId());
+        log.setResult("SUCCESS");
+        logMapper.insertWcs(log);
+
         return Result.success(taskService.inboundFinished(inventory));
     }
 
@@ -60,7 +80,6 @@ public class TaskController {
     @PostMapping("/outbound")
     public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
         String message = taskService.createOutboundTask(mc);
-        if (message == null) return Result.fail("存在入库任务或重复创建!");
         return Result.success(message);
     }
 
@@ -72,6 +91,14 @@ public class TaskController {
     @GetMapping("/getTask")
     public Result<Task> getTask(){
         Task task = taskService.getOutboundTask();
+
+        // WCS日志
+        Logs log = new Logs();
+        log.setType("OUTBOUND");
+        log.setParam("NONE");
+        log.setResult("任务ID: " + task.getTaskId());
+        logMapper.insertWcs(log);
+
         return Result.success(task);
     }
 
@@ -83,7 +110,19 @@ public class TaskController {
     @PostMapping("/finishedOutbound")
     public Result<String> finishedOutbound(@RequestParam String id, @RequestParam String status){
         String message = taskService.finishedOutbound(id, status);
-        if (message == null) return Result.fail("任务ID无效");
+
+        // WCS日志
+        Logs log = new Logs();
+        log.setType("OUTBOUND");
+        log.setParam("任务ID: " + id + " / " + "状态: " + status);
+
+        if (message == null) {
+            log.setResult("任务ID无效");
+            return Result.fail();
+        }
+
+        log.setResult("SUCCESS");
+        logMapper.insertWcs(log);
         return Result.success(message);
     }
 
