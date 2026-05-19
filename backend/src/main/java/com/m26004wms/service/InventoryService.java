@@ -13,7 +13,8 @@ public interface InventoryService {
     Object page(
             Integer current,
             Integer size,
-            String containerId
+            String containerId,
+            String locationAreaId
     );
 
     /**

@@ -39,10 +39,14 @@ public class InventoryServiceImpl implements InventoryService {
      * 分页
      */
     @Override
-    public Object page(Integer current, Integer size, String containerId) {
+    public Object page(Integer current, Integer size, String containerId, String locationAreaId) {
 
         int offset = (current - 1) * size;
-        List<Inventory> records = inventoryMapper.selectPage(offset, size, containerId);
+
+        containerId = containerId == null ? "" : containerId;
+        locationAreaId = locationAreaId == null ? "" : locationAreaId;
+
+        List<Inventory> records = inventoryMapper.selectPage(offset, size, containerId, locationAreaId);
         int total = inventoryMapper.selectCount(containerId);
 
         List<InventoryData> data = new LinkedList<>();

@@ -2115,11 +2115,19 @@ button:focus {
 
   width: 520px;
 
+  height: 280px;
+
   background: white;
 
   border-radius: 10px;
 
   overflow: hidden;
+}
+
+.scan-dialog button{
+
+  margin-top: 15px;
+
 }
 
 </style>

@@ -1,5 +1,6 @@
 package com.m26004wms.controller;
 
+import com.m26004wms.common.LogUtil;
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inbound;
 import com.m26004wms.entity.Logs;
@@ -58,6 +59,22 @@ public class InboundController {
 
                 );
 
+        if (!materialCode.isEmpty()
+                || !materialName.isEmpty()
+                || !containerId.isEmpty()
+                || !batch.isEmpty()
+                || !customerCode.isEmpty()){
+            LogUtil.success(
+                    logMapper,
+                    "SELECT",
+                    "SELECT INBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
+                            "MATERIAL_NAME( " + materialName + " ) AND " +
+                            "CONTAINER_ID( " + containerId + " ) AND " +
+                            "BATCH( " + batch + " ) AND " +
+                            "CUSTOMER( " + customerCode + " )"
+            );
+        }
+
         return Result.success(page);
 
     }
@@ -72,8 +89,9 @@ public class InboundController {
         // 操作日志
         Logs log = new Logs();
         log.setType("INSERT");
+        if (inboundMapper.selectById(inbound.getId()) != null) log.setType("UPDATE");
         log.setResult("SUCCESS");
-        log.setParam("ADD OR UPDATE DATA INTO INBOUND :" + inbound.getId());
+        log.setParam("EDIT " + inbound);
         logMapper.insertControl(log);
 
         return Result.success();
@@ -90,7 +108,7 @@ public class InboundController {
         Logs log = new Logs();
         log.setType("DELETE");
         log.setResult("SUCCESS");
-        log.setParam("DELETE DATA IN INBOUND: " + id);
+        log.setParam("DELETE DATA IN INBOUND( ID:" + id +" )");
         logMapper.insertControl(log);
 
         return Result.success();
@@ -106,8 +124,8 @@ public class InboundController {
         // 操作日志
         Logs log = new Logs();
         log.setType("SELECT");
-        log.setResult(in.toString());
-        log.setParam("GET DATA BY ID FROM INBOUND: " + id);
+        log.setResult("SUCCESS");
+        log.setParam("GET DATA BY ID FROM INBOUND( ID:" + id +" )");
         logMapper.insertControl(log);
 
         return Result.success(in);

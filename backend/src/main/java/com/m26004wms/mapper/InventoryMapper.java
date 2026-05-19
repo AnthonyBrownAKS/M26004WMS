@@ -53,11 +53,9 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
             where
 
             (
-                #{containerId} is null
-                or
-                #{containerId} = ''
-                or
-                container_id like concat('%', #{containerId}, '%')
+     
+                container_id like concat('%', #{containerId}, '%') AND
+                location_area_id like concat('%', #{locationAreaId}, '%')
             )
 
             order by creation_time desc
@@ -68,7 +66,8 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
     List<Inventory> selectPage(
             @Param("offset") int offset,
             @Param("size") int size,
-            @Param("containerId") String containerId
+            @Param("containerId") String containerId,
+            @Param("locationAreaId") String locationAreaId
     );
 
     /**

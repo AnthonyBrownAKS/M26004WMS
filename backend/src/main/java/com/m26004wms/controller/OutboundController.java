@@ -1,10 +1,12 @@
 package com.m26004wms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.m26004wms.common.LogUtil;
 import com.m26004wms.common.Result;
 import com.m26004wms.entity.Inbound;
 import com.m26004wms.entity.MaterialContainer;
 import com.m26004wms.entity.Outbound;
+import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.OutboundMapper;
 import com.m26004wms.service.OutboundService;
@@ -23,6 +25,9 @@ public class OutboundController {
 
     @Autowired
     private MaterialContainerMapper materialContainerMapper;
+
+    @Autowired
+    private LogMapper logMapper;
 
     /**
      * 分页条件查询
@@ -58,6 +63,22 @@ public class OutboundController {
 
                 );
 
+        if (!materialCode.isEmpty()
+                || !materialName.isEmpty()
+                || !containerId.isEmpty()
+                || !batch.isEmpty()
+                || !customerCode.isEmpty()){
+            LogUtil.success(
+                    logMapper,
+                    "SELECT",
+                    "SELECT OUTBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
+                            "MATERIAL_NAME( " + materialName + " ) AND " +
+                            "CONTAINER_ID( " + containerId + " ) AND " +
+                            "BATCH( " + batch + " ) AND " +
+                            "CUSTOMER( " + customerCode + " )"
+            );
+        }
+
         return Result.success(page);
     }
 
@@ -75,6 +96,13 @@ public class OutboundController {
      */
     @PutMapping("/add")
     public Result<String> add(@RequestBody Outbound outbound) {
+
+        LogUtil.success(
+                logMapper,
+                outboundMapper.selectById(outbound.getId()) == null ? "INSERT" : "UPDATE",
+                "EDIT " + outbound
+        );
+
         outboundMapper.insertOrUpdate(outbound);
         return Result.success();
 
@@ -85,6 +113,13 @@ public class OutboundController {
      */
     @DeleteMapping("/{id}")
     public Result<String> delete(@PathVariable Long id) {
+
+        LogUtil.success(
+                logMapper,
+                "DELETE",
+                "DELETE " + outboundMapper.selectById(id)
+        );
+
         outboundMapper.deleteById(id);
         return Result.success();
     }

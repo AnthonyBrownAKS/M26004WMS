@@ -3,11 +3,13 @@ package com.m26004wms.controller;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.m26004wms.common.LogUtil;
 import com.m26004wms.common.Result;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
 import com.m26004wms.entity.MaterialContainer;
 import com.m26004wms.entity.Outbound;
+import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.MaterialMapper;
 import com.m26004wms.service.MaterialService;
@@ -35,6 +37,9 @@ public class MaterialController {
     @Autowired
     private MaterialContainerMapper materialContainerMapper;
 
+    @Autowired
+    private LogMapper logMapper;
+
 
     public MaterialController(MaterialService service) {
         this.materialService = service;
@@ -55,9 +60,24 @@ public class MaterialController {
 
             materialService.importExcel(list);
 
+            // 日志记录
+            LogUtil.success(
+                    logMapper,
+                    "INSERT",
+                    "IMPORT MATERIAL EXCEL INTO DATABASE"
+            );
+
             return Result.success("导入成功");
 
         } catch (Exception e) {
+
+            LogUtil.fail(
+                    logMapper,
+                    "INSERT",
+                    "导入失败",
+                    "IMPORT MATERIAL EXCEL INTO DATABASE"
+            );
+
             return Result.fail("导入失败：" + e.getMessage());
         }
     }
@@ -82,6 +102,13 @@ public class MaterialController {
         EasyExcel.write(response.getOutputStream(), Material.class)
                 .sheet("物料数据")
                 .doWrite(list);
+
+        // 日志记录
+        LogUtil.success(
+                logMapper,
+                "SELECT",
+                "EXPORT MATERIAL EXCEL INTO DATABASE"
+        );
     }
 
     /**
@@ -96,6 +123,13 @@ public class MaterialController {
 
             @RequestParam(required = false) String code
     ) {
+        // 日志
+        if (!code.isEmpty())
+            LogUtil.success(
+                    logMapper,
+                    "SELECT",
+                    "SELECT MATERIAL BY CODE( " + code + " )"
+            );
 
         return Result.success(materialService.page(current, size, code));
 
@@ -132,6 +166,13 @@ public class MaterialController {
     public Result<String> add(
             @RequestBody Material material
     ) {
+        // 日志
+        String type = materialMapper.selectById(material.getId()) == null ? "INSERT" : "UPDATE";
+        LogUtil.success(
+                logMapper,
+                type,
+                "EDIT :" + material
+        );
 
         material.setShortCode(material.getCode());
         material.setCreationTime(LocalDateTime.now());
@@ -146,12 +187,15 @@ public class MaterialController {
      * 删除
      */
     @DeleteMapping("/{id}")
-    public Result<String> delete(
-            @PathVariable String id
-    ) {
+    public Result<String> delete(@PathVariable String id) {
+
+        LogUtil.success(
+                logMapper,
+                "DELETE",
+                "DELETE :" + materialMapper.selectById(id)
+        );
 
         materialMapper.deleteById(id);
-
         return Result.success();
 
     }

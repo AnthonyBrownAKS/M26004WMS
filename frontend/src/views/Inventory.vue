@@ -36,6 +36,13 @@
             style="color: #2e303a"
         >
 
+        <input
+            v-model="searchLocationAreaId"
+            placeholder="请输入库区"
+            @keyup.enter="loadInventoryList"
+            style="color: #2e303a"
+        >
+
         <button @click="loadInventoryList">
           查询
         </button>
@@ -692,6 +699,8 @@ const addVisible = ref(false)
 
 const searchContainerId = ref('')
 
+const searchLocationAreaId = ref('')
+
 const current = ref(1)
 
 const size = ref(8)
@@ -720,15 +729,15 @@ const editForm = ref({
 
   containerId: '',
 
-  quantity: null,
+  quantity: 0,
 
   batch: '',
 
   locationAreaId: '',
 
-  rowNo: null,
+  rowNo: 0,
 
-  columnNo: null
+  columnNo: 0
 
 })
 
@@ -758,7 +767,10 @@ const loadInventoryList = async () => {
             size: size.value,
 
             containerId:
-            searchContainerId.value
+            searchContainerId.value,
+
+            locationAreaId:
+            searchLocationAreaId.value
 
           }
 
@@ -847,6 +859,8 @@ const resetSearch = () => {
 
   searchContainerId.value = ''
 
+  searchLocationAreaId.value = ''
+
   current.value = 1
 
   loadInventoryList()
@@ -895,7 +909,29 @@ const openEdit = (row) => {
 
 const submitEdit = async () => {
 
+  // 数量必须是数字
+  if (isNaN(editForm.value.quantity)) {
 
+    showMessage('数量必须为数字', 'error')
+    return
+
+  }
+
+  // 数量必须大于0
+  if (Number.isNaN(Number(editForm.value.quantity))) {
+
+    showMessage('数量必须大于0', 'error')
+    return
+
+  }
+
+  // 容器ID必须以PT开头
+  if (!editForm.value.containerId.startsWith('PT')) {
+
+    showMessage('容器ID必须以PT开头', 'error')
+    return
+
+  }
 
 
   try {

@@ -1,5 +1,6 @@
 package com.m26004wms.controller;
 
+import com.m26004wms.common.LogUtil;
 import com.m26004wms.entity.*;
 import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.TaskMapper;
@@ -8,6 +9,7 @@ import com.m26004wms.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
@@ -29,9 +31,18 @@ public class TaskController {
      */
     @PostMapping("/inbound")
     public Result<String> createInbound(@RequestBody Scan scan) {
-
         String message = taskService.createInboundTask(scan);
-        if (message == null) return Result.fail("入库失败");
+
+        Logs log = new Logs();
+        log.setType("INSERT");
+        log.setParam("INSERT " + scan);
+
+        if (message == null) {
+            log.setResult("FAIL " + "入库失败");
+            return Result.fail("入库失败");
+        }
+        logMapper.insertControl(log);
+
         return Result.success(message);
     }
 
@@ -48,8 +59,8 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
-        log.setParam("收到CODE: " + code);
-        log.setResult("库位ID: " + location.getId());
+        log.setParam("INBOUND BY CODE( " + code + " )");
+        log.setResult("SUCCESS " + location);
         logMapper.insertWcs(log);
 
         return Result.success(location);
@@ -66,7 +77,7 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
-        log.setParam("库存ID: " + inventory.getId());
+        log.setParam("INBOUND BY " + inventory);
         log.setResult("SUCCESS");
         logMapper.insertWcs(log);
 
@@ -80,6 +91,14 @@ public class TaskController {
     @PostMapping("/outbound")
     public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
         String message = taskService.createOutboundTask(mc);
+
+        // WCS日志
+        Logs log = new Logs();
+        log.setType("DELETE");
+        log.setParam("DELETE BY " + mc);
+        log.setResult("SUCCESS");
+        logMapper.insertControl(log);
+
         return Result.success(message);
     }
 
@@ -95,8 +114,8 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("NONE");
-        log.setResult("任务ID: " + task.getTaskId());
+        log.setParam("OUTBOUND TASK " + task);
+        log.setResult("SUCCESS");
         logMapper.insertWcs(log);
 
         return Result.success(task);
@@ -114,15 +133,14 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("任务ID: " + id + " / " + "状态: " + status);
-
+        log.setParam("OUTBOUND BY TASK( id: " + id + " ; status: " + status + " )");
         if (message == null) {
-            log.setResult("任务ID无效");
+            log.setResult("FAIL " + "没有找到对应任务ID");
             return Result.fail();
         }
-
         log.setResult("SUCCESS");
         logMapper.insertWcs(log);
+
         return Result.success(message);
     }
 
@@ -164,6 +182,15 @@ public class TaskController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String containerId) {
 
+        if (!containerId.isEmpty()){
+            // 日志
+            LogUtil.success(
+                    logMapper,
+                    "SELECT",
+                    "SELECT MATERIAL BY CONTAINER_ID( " + containerId + " )"
+            );
+        }
+
         return Result.success("分页查询成功",
                 taskService.pageTasks(current, size, containerId));
     }
@@ -171,15 +198,39 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public Result<String> deleteTask(@PathVariable String id){
         try{
+            LogUtil.success(
+                    logMapper,
+                    "DELETE",
+                    "DELETE " + taskMapper.selectById(id)
+            );
+
             taskMapper.deleteById(id);
             return Result.success();
         }catch(Exception e) {
+            LogUtil.fail(
+                    logMapper,
+                    "DELETE",
+                    "删除失败",
+                    "DELETE " + taskMapper.selectById(id)
+            );
+
             return Result.fail("数据库错误");
         }
     }
 
     @PostMapping("/add")
     public Result<String> addTask(@RequestBody Task task){
+
+        // 日志
+        String type = taskMapper.selectById(task.getTaskId()) == null ? "INSERT" : "UPDATE";
+        LogUtil.success(
+                logMapper,
+                type,
+                "EDIT " + task
+        );
+
+        task.setCreateTime(LocalDateTime.now());
+
         taskMapper.insertOrUpdate(task);
         return Result.success();
     }

@@ -934,11 +934,19 @@ onMounted(() => {
 
   width: 520px;
 
+  height: 270px;
+
   background: white;
 
   border-radius: 10px;
 
   overflow: hidden;
+}
+
+.scan-dialog button{
+
+  margin-top: 15px;
+
 }
 
 .card-title {
