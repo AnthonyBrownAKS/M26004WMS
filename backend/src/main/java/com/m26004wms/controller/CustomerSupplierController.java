@@ -57,7 +57,7 @@ public class CustomerSupplierController {
             Logs log = new Logs();
             log.setType("INSERT");
             log.setResult("SUCCESS");
-            log.setParam("IMPORT CUSTOMER EXCEL INTO DATABASE");
+            log.setParam("导入客商表IMPORT CUSTOMER EXCEL INTO DATABASE");
             logMapper.insertControl(log);
 
             return Result.success("导入成功");
@@ -68,7 +68,7 @@ public class CustomerSupplierController {
             Logs log = new Logs();
             log.setType("INSERT");
             log.setResult("FAIL");
-            log.setParam("IMPORT CUSTOMER EXCEL INTO DATABASE");
+            log.setParam("导入客商表IMPORT CUSTOMER EXCEL INTO DATABASE");
             logMapper.insertControl(log);
 
             return Result.fail("导入失败：" + e.getMessage());
@@ -103,7 +103,7 @@ public class CustomerSupplierController {
         Logs log = new Logs();
         log.setType("SELECT");
         log.setResult("SUCCESS");
-        log.setParam("EXPORT CUSTOMER EXCEL FROM DATABASE");
+        log.setParam("导出客商表EXPORT CUSTOMER EXCEL FROM DATABASE");
         logMapper.insertControl(log);
     }
 
@@ -125,7 +125,7 @@ public class CustomerSupplierController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT CUSTOMER BY CODE( " + code + " )"
+                    "搜索客商表SELECT CUSTOMER BY CODE( " + code + " )"
             );
 
         return Result.success(service.page(current, size, code));
@@ -173,7 +173,7 @@ public class CustomerSupplierController {
         Logs log = new Logs();
         log.setType("UPDATE");
         log.setResult("SUCCESS");
-        log.setParam("UPDATE CUSTOMER( NAME:"+ customerSupplier.getName() + " ) INTO DATABASE");
+        log.setParam("修改客商UPDATE CUSTOMER( NAME:"+ customerSupplier.getName() + " ) INTO DATABASE");
         logMapper.insertControl(log);
 
         return Result.success();

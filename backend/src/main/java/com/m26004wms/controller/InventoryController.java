@@ -52,7 +52,7 @@ public class InventoryController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT DATA BY CONTAINER_ID( " + containerId + " ) AND LOCATION_AREA_ID( " + locationAreaId + " )"
+                    "搜索库存SELECT DATA BY CONTAINER_ID( " + containerId + " ) AND LOCATION_AREA_ID( " + locationAreaId + " )"
             );
         }
 
@@ -114,7 +114,7 @@ public class InventoryController {
             LogUtil.success(
                     logMapper,
                     type,
-                    "EDIT " + inventoryData
+                    "修改库存EDIT " + inventoryData
             );
 
             inventoryService.add(inventoryData);
@@ -126,7 +126,7 @@ public class InventoryController {
                     logMapper,
                     type,
                     "添加失败",
-                    "EDIT " + inventoryData
+                    "修改库存EDIT " + inventoryData
             );
 
             return Result.fail(e.getMessage());
@@ -155,7 +155,7 @@ public class InventoryController {
         LogUtil.success(
                 logMapper,
                 "DELETE",
-                "DELETE " + in
+                "删除库存DELETE " + in
         );
 
         inventoryService.del(id);

@@ -67,7 +67,7 @@ public class InboundController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT INBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
+                    "搜索入库任务SELECT INBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
                             "MATERIAL_NAME( " + materialName + " ) AND " +
                             "CONTAINER_ID( " + containerId + " ) AND " +
                             "BATCH( " + batch + " ) AND " +
@@ -91,7 +91,7 @@ public class InboundController {
         log.setType("INSERT");
         if (inboundMapper.selectById(inbound.getId()) != null) log.setType("UPDATE");
         log.setResult("SUCCESS");
-        log.setParam("EDIT " + inbound);
+        log.setParam("修改入库任务EDIT " + inbound);
         logMapper.insertControl(log);
 
         return Result.success();
@@ -108,7 +108,7 @@ public class InboundController {
         Logs log = new Logs();
         log.setType("DELETE");
         log.setResult("SUCCESS");
-        log.setParam("DELETE DATA IN INBOUND( ID:" + id +" )");
+        log.setParam("删除入库任务DELETE DATA IN INBOUND( ID:" + id +" )");
         logMapper.insertControl(log);
 
         return Result.success();

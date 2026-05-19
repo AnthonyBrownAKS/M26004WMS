@@ -71,6 +71,10 @@
               操作结果
             </th>
 
+            <th>
+              传出信息
+            </th>
+
             <th style="width: 200px">
               创建日期
             </th>
@@ -106,10 +110,10 @@
                   class="type-tag"
                   :class="{
 
-                    insert:
+                    update:
                     item.type === 'INBOUND',
 
-                    delete:
+                    select:
                     item.type === 'OUTBOUND',
 
                   }"
@@ -137,9 +141,32 @@
 
             <td>
 
+              <div
+                  class="result-tag"
+                  :class="{
+
+        success:
+        splitResult(item.result).status === 'SUCCESS',
+
+        fail:
+        splitResult(item.result).status === 'FAIL'
+
+      }"
+              >
+
+                {{ splitResult(item.result).status }}
+
+              </div>
+
+            </td>
+
+            <!-- 信息 -->
+
+            <td>
+
               <div class="result-box">
 
-                {{ item.result }}
+                {{ splitResult(item.result).message }}
 
               </div>
 
@@ -166,7 +193,7 @@
               :key="'empty-' + n"
           >
 
-            <td colspan="5"></td>
+            <td colspan="6"></td>
 
           </tr>
 
@@ -328,6 +355,46 @@ const resetSearch = () => {
 
   loadLogList()
 
+}
+
+const splitResult = (result) => {
+
+  if (!result) {
+
+    return {
+
+      status: '',
+
+      message: ''
+
+    }
+  }
+
+  const firstSpace =
+      result.indexOf(' ')
+
+  // 没有空格
+
+  if (firstSpace === -1) {
+
+    return {
+
+      status: result,
+
+      message: ''
+
+    }
+  }
+
+  return {
+
+    status:
+        result.substring(0, firstSpace),
+
+    message:
+        result.substring(firstSpace + 1)
+
+  }
 }
 
 const formatTime = (time) => {
@@ -770,6 +837,43 @@ onMounted(() => {
   background: #4b5563;
 
   border-radius: 4px;
+}
+
+.result-tag {
+
+  width: 90px;
+
+  height: 28px;
+
+  border-radius: 4px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+.success {
+
+  background: rgba(82,196,26,0.12);
+
+  color: #40b800;
+
+  border: 1px solid rgba(82,196,26,0.25);
+}
+
+.fail {
+
+  background: rgba(245,108,108,0.12);
+
+  color: #f56c6c;
+
+  border: 1px solid rgba(245,108,108,0.25);
 }
 
 </style>

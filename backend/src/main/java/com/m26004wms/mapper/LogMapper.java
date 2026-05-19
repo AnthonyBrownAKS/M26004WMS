@@ -1,7 +1,9 @@
 package com.m26004wms.mapper;
 
+import com.m26004wms.dto.WcsLogCountDTO;
 import com.m26004wms.entity.Logs;
 import com.m26004wms.entity.Material;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -169,5 +171,48 @@ public interface LogMapper {
             """)
     void insertControl(Logs apilog);
 
+
+
+    // 查询每天日志数量
+    @Select("""
+            SELECT
+                DATE(creation_time) as logDate,
+                type,
+                COUNT(*) as count
+            FROM wcs_log
+            WHERE type IN ('INBOUND','OUTBOUND')
+            GROUP BY DATE(creation_time), type
+            ORDER BY logDate
+            """)
+    List<WcsLogCountDTO> getChartData();
+
+    // 清空日志
+    @Delete("TRUNCATE TABLE wcs_log")
+    void clearLogs();
+
+    // 清空日志
+    @Delete("TRUNCATE TABLE control_log")
+    void clearLogsC();
+
+
+    // 查询每天日志数量
+    @Select("""
+            SELECT
+                    ROUND((data_length + index_length) / 1024 / 1024,2) AS sizeMB
+                    FROM information_schema.TABLES
+                    WHERE table_schema = DATABASE()
+                    AND table_name='wcs_log'
+            """)
+    Double getSize();
+
+    // 查询每天日志数量
+    @Select("""
+            SELECT
+                    ROUND((data_length + index_length) / 1024 / 1024,2) AS sizeMB
+                    FROM information_schema.TABLES
+                    WHERE table_schema = DATABASE()
+                    AND table_name='control_log'
+            """)
+    Double getSizeC();
 
 }

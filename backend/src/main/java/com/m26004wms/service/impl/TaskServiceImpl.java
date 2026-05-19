@@ -1,5 +1,6 @@
 package com.m26004wms.service.impl;
 
+import com.m26004wms.common.LogUtil;
 import com.m26004wms.entity.*;
 import com.m26004wms.mapper.*;
 import com.m26004wms.mapper.MaterialContainerMapper;
@@ -47,6 +48,8 @@ public class TaskServiceImpl implements TaskService {
     private OutboundMapper outboundMapper;
     @Autowired
     private InboundMapper inboundMapper;
+    @Autowired
+    private LogMapper logMapper;
 
     /**
      * 绑定任务
@@ -56,6 +59,9 @@ public class TaskServiceImpl implements TaskService {
     public String createInboundTask(Scan scan) {
 
         try{
+            // 库存已经存在?
+
+
             // 库存表提前占用
             Inventory inventory = new Inventory();
             inventory.setLocationAreaId("C");
@@ -126,6 +132,13 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public Location getLocation(){
+
+        LogUtil.success(
+                logMapper,
+                "SELECT",
+                "货位获取"
+        );
+
         return locationMapper.selectEmptyLocation();
     }
 
@@ -137,14 +150,34 @@ public class TaskServiceImpl implements TaskService {
     public String inboundFinished(Inventory inventory) {
         // 删除占位库存
         try{
+
+            LogUtil.success(
+                    logMapper,
+                    "DELETE",
+                    "SUCCESS 库存" + inventory
+            );
+
             inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
         }catch (Exception e){
+
+            LogUtil.fail(
+                    logMapper,
+                    "DELETE",
+                    "FAIL " + "占位数据异常",
+                    "删除库存" + inventory
+            );
             return "没有占位数据:" + e;
         }
 
         // 插入库存
         inventory.setCreationTime(LocalDateTime.now());
         inventoryMapper.insert(inventory);
+
+        LogUtil.success(
+                logMapper,
+                "INSERT",
+                "SUCCESS 插入库存" + inventory
+        );
 
         // 任务更新
         Task task = taskMapper.selectCreatedTaskByContainerId(inventory.getContainerId());
@@ -153,12 +186,24 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus("FINISHED");
         taskMapper.updateById(task);
 
+        LogUtil.success(
+                logMapper,
+                "UPDATE",
+                "SUCCESS 任务更新" + inventory
+        );
+
         // 库位表更新
-        Location location = locationMapper.selectById(inventory.getLocationId());
-        location.setCargoStatus("FULL");
-        location.setLockState("INBOUND_LOCK");
-        location.setLockContainerBarcode(inventory.getContainerId());
-        locationMapper.updateById(location);
+        // Location location = locationMapper.selectById(inventory.getLocationId());
+        // location.setCargoStatus("FULL");
+        // location.setLockState("INBOUND_LOCK");
+        // location.setLockContainerBarcode(inventory.getContainerId());
+        // locationMapper.updateById(location);
+//
+        // LogUtil.success(
+        //         logMapper,
+        //         "UPDATE",
+        //         "库位表更新 " + inventory
+        // );
 
         // 异常?
 
@@ -215,7 +260,28 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public Task getOutboundTask() {
-        return taskMapper.getEarliestCreatedTask();
+        LogUtil.success(
+                logMapper,
+                "SELECT",
+                "SUCCESS WCS尝试获取出库任务"
+        );
+
+        Task task = taskMapper.getEarliestCreatedTask();
+        if (task == null){
+            LogUtil.fail(
+                    logMapper,
+                    "SELECT",
+                    "FAIL 没有待执行的出库任务",
+                    "NULL"
+            );
+        }
+
+        LogUtil.success(
+                logMapper,
+                "SELECT",
+                "SUCCESS 获取出库任务" + task
+        );
+        return task;
     }
 
     /**
@@ -232,6 +298,11 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.updateById(task);
 
         // 删除库存表数据
+        LogUtil.success(
+                logMapper,
+                "DELETE",
+                "SUCCESS 删除库存"
+        );
         inventoryMapper.deleteByContainerId(task.getContainerId());
         return "出库任务完成";
     }
@@ -278,14 +349,14 @@ public class TaskServiceImpl implements TaskService {
 
         // ======线程池闲置中======
 
-//        task.setExecuteTime(LocalDateTime.now());
-//        taskMapper.updateById(task);
-//
-//        if ("IN".equals(task.getTaskType())) {
-//            handleInbound(task);
-//        } else {
-//            handleOutbound(task);
-//        }
+        // task.setExecuteTime(LocalDateTime.now());
+        // taskMapper.updateById(task);
+
+        // if ("IN".equals(task.getTaskType())) {
+        //     handleInbound(task);
+        // } else {
+        //     handleOutbound(task);
+        // }
     }
 
 

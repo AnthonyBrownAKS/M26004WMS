@@ -1,15 +1,14 @@
 package com.m26004wms.service.impl;
 
+import com.m26004wms.dto.WcsLogChartVO;
+import com.m26004wms.dto.WcsLogCountDTO;
 import com.m26004wms.entity.Logs;
-import com.m26004wms.entity.Material;
 import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class LogServiceImpl implements LogService {
@@ -85,6 +84,79 @@ public class LogServiceImpl implements LogService {
         result.put("total", total);
 
         return result;
-
     }
+
+
+
+    @Override
+    public WcsLogChartVO getChartData() {
+
+        List<WcsLogCountDTO> list =
+                logMapper.getChartData();
+
+        // 日期去重排序
+
+        Set<String> dateSet = new LinkedHashSet<>();
+
+        for (WcsLogCountDTO dto : list) {
+
+            dateSet.add(dto.getLogDate());
+        }
+
+        List<String> dates = new ArrayList<>(dateSet);
+
+        // 初始化数据
+
+        Map<String,Integer> inboundMap =
+                new HashMap<>();
+
+        Map<String,Integer> outboundMap =
+                new HashMap<>();
+
+        for (WcsLogCountDTO dto : list) {
+
+            if ("INBOUND".equals(dto.getType())) {
+
+                inboundMap.put(
+                        dto.getLogDate(),
+                        dto.getCount()
+                );
+            }
+
+            if ("OUTBOUND".equals(dto.getType())) {
+
+                outboundMap.put(
+                        dto.getLogDate(),
+                        dto.getCount()
+                );
+            }
+        }
+
+        List<Integer> inbound = new ArrayList<>();
+
+        List<Integer> outbound = new ArrayList<>();
+
+        for (String date : dates) {
+
+            inbound.add(
+                    inboundMap.getOrDefault(date,0)
+            );
+
+            outbound.add(
+                    outboundMap.getOrDefault(date,0)
+            );
+        }
+
+        WcsLogChartVO vo =
+                new WcsLogChartVO();
+
+        vo.setDates(dates);
+
+        vo.setInbound(inbound);
+
+        vo.setOutbound(outbound);
+
+        return vo;
+    }
+
 }

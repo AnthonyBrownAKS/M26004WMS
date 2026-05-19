@@ -1,12 +1,11 @@
 package com.m26004wms.controller;
 
 import com.m26004wms.common.Result;
+import com.m26004wms.dto.WcsLogChartVO;
+import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/log")
@@ -14,6 +13,9 @@ public class LogsController {
 
     @Autowired
     private LogService logService;
+
+    @Autowired
+    private LogMapper logMapper;
 
     @GetMapping("/apiLog")
     public Result<Object> page(
@@ -51,6 +53,31 @@ public class LogsController {
 
     }
 
+
+    // 图表数据
+    @GetMapping("/chart")
+    public Result<WcsLogChartVO> getChartData(){
+
+        return Result.success(logService.getChartData());
+    }
+
+    // 清空日志
+    @DeleteMapping("/clear")
+    public Result<String> clearLogs(){
+
+        logMapper.clearLogs();
+        logMapper.clearLogsC();
+        return Result.success("清空成功");
+    }
+
+    // 获取内存
+    @GetMapping("/size")
+    public Result<String> getLogSize(){
+
+        Double size = logMapper.getSize() + logMapper.getSizeC();
+
+        return Result.success(size + " MB");
+    }
 
 
 }

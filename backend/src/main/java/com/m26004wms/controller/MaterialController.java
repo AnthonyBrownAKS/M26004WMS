@@ -64,7 +64,7 @@ public class MaterialController {
             LogUtil.success(
                     logMapper,
                     "INSERT",
-                    "IMPORT MATERIAL EXCEL INTO DATABASE"
+                    "导入物料表IMPORT MATERIAL EXCEL INTO DATABASE"
             );
 
             return Result.success("导入成功");
@@ -75,7 +75,7 @@ public class MaterialController {
                     logMapper,
                     "INSERT",
                     "导入失败",
-                    "IMPORT MATERIAL EXCEL INTO DATABASE"
+                    "导入物料表IMPORT MATERIAL EXCEL INTO DATABASE"
             );
 
             return Result.fail("导入失败：" + e.getMessage());
@@ -107,7 +107,7 @@ public class MaterialController {
         LogUtil.success(
                 logMapper,
                 "SELECT",
-                "EXPORT MATERIAL EXCEL INTO DATABASE"
+                "导出物料表EXPORT MATERIAL EXCEL INTO DATABASE"
         );
     }
 
@@ -128,7 +128,7 @@ public class MaterialController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT MATERIAL BY CODE( " + code + " )"
+                    "搜索物料SELECT MATERIAL BY CODE( " + code + " )"
             );
 
         return Result.success(materialService.page(current, size, code));
@@ -171,7 +171,7 @@ public class MaterialController {
         LogUtil.success(
                 logMapper,
                 type,
-                "EDIT :" + material
+                "修改物料EDIT :" + material
         );
 
         material.setShortCode(material.getCode());
@@ -192,7 +192,7 @@ public class MaterialController {
         LogUtil.success(
                 logMapper,
                 "DELETE",
-                "DELETE :" + materialMapper.selectById(id)
+                "删除物料DELETE :" + materialMapper.selectById(id)
         );
 
         materialMapper.deleteById(id);

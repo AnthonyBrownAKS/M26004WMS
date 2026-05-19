@@ -35,7 +35,7 @@ public class TaskController {
 
         Logs log = new Logs();
         log.setType("INSERT");
-        log.setParam("INSERT " + scan);
+        log.setParam("创建入库任务INSERT " + scan);
 
         if (message == null) {
             log.setResult("FAIL " + "入库失败");
@@ -52,15 +52,15 @@ public class TaskController {
      */
     @GetMapping("/getLocation")
     public Result<Location> getLocation(@RequestBody String code){
-        System.out.println(code);
+
         Location location = taskService.getLocation();
         if (location == null) return Result.fail("货位没有空位!");
 
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
-        log.setParam("INBOUND BY CODE( " + code + " )");
-        log.setResult("SUCCESS " + location);
+        log.setParam("获取库位信息\n" + code);
+        log.setResult("SUCCESS 库位ID:" + location.getId());
         logMapper.insertWcs(log);
 
         return Result.success(location);
@@ -68,7 +68,7 @@ public class TaskController {
 
     /**
      * WCS接口2
-     * 分配库位√
+     * 完成入库
      * 传入值命名规范: locationAreaId, rowNo, columnNo, containerId, locationId
      */
     @PostMapping("/finishedInbound")
@@ -77,7 +77,7 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
-        log.setParam("INBOUND BY " + inventory);
+        log.setParam("完成入库\n容器ID: " + inventory.getContainerId());
         log.setResult("SUCCESS");
         logMapper.insertWcs(log);
 
@@ -94,8 +94,8 @@ public class TaskController {
 
         // WCS日志
         Logs log = new Logs();
-        log.setType("DELETE");
-        log.setParam("DELETE BY " + mc);
+        log.setType("INSERT");
+        log.setParam("创建出库任务\n信息:" + mc);
         log.setResult("SUCCESS");
         logMapper.insertControl(log);
 
@@ -114,7 +114,7 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("OUTBOUND TASK " + task);
+        log.setParam("获取出库任务\n任务:" + task);
         log.setResult("SUCCESS");
         logMapper.insertWcs(log);
 
@@ -133,7 +133,7 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("OUTBOUND BY TASK( id: " + id + " ; status: " + status + " )");
+        log.setParam("出库任务完成\nTASK( id: " + id + " ; status: " + status + " )");
         if (message == null) {
             log.setResult("FAIL " + "没有找到对应任务ID");
             return Result.fail();
@@ -187,7 +187,7 @@ public class TaskController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT MATERIAL BY CONTAINER_ID( " + containerId + " )"
+                    "搜索任务SELECT MATERIAL BY CONTAINER_ID( " + containerId + " )"
             );
         }
 
@@ -201,7 +201,7 @@ public class TaskController {
             LogUtil.success(
                     logMapper,
                     "DELETE",
-                    "DELETE " + taskMapper.selectById(id)
+                    "删除任务DELETE " + taskMapper.selectById(id)
             );
 
             taskMapper.deleteById(id);
@@ -211,7 +211,7 @@ public class TaskController {
                     logMapper,
                     "DELETE",
                     "删除失败",
-                    "DELETE " + taskMapper.selectById(id)
+                    "删除任务DELETE " + taskMapper.selectById(id)
             );
 
             return Result.fail("数据库错误");
@@ -226,7 +226,7 @@ public class TaskController {
         LogUtil.success(
                 logMapper,
                 type,
-                "EDIT " + task
+                "修改任务EDIT " + task
         );
 
         task.setCreateTime(LocalDateTime.now());

@@ -71,7 +71,7 @@ public class OutboundController {
             LogUtil.success(
                     logMapper,
                     "SELECT",
-                    "SELECT OUTBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
+                    "搜素出库任务SELECT OUTBOUND BY MATERIAL_CODE( " + materialCode + " ) AND " +
                             "MATERIAL_NAME( " + materialName + " ) AND " +
                             "CONTAINER_ID( " + containerId + " ) AND " +
                             "BATCH( " + batch + " ) AND " +
@@ -100,7 +100,7 @@ public class OutboundController {
         LogUtil.success(
                 logMapper,
                 outboundMapper.selectById(outbound.getId()) == null ? "INSERT" : "UPDATE",
-                "EDIT " + outbound
+                "修改出库任务EDIT " + outbound
         );
 
         outboundMapper.insertOrUpdate(outbound);
@@ -117,7 +117,7 @@ public class OutboundController {
         LogUtil.success(
                 logMapper,
                 "DELETE",
-                "DELETE " + outboundMapper.selectById(id)
+                "删除出库任务DELETE " + outboundMapper.selectById(id)
         );
 
         outboundMapper.deleteById(id);
