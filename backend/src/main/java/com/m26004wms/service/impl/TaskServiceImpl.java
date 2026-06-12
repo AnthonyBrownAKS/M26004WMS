@@ -154,7 +154,7 @@ public class TaskServiceImpl implements TaskService {
             LogUtil.success(
                     logMapper,
                     "DELETE",
-                    "SUCCESS 库存" + inventory
+                    "库存" + inventory
             );
 
             inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
@@ -176,7 +176,7 @@ public class TaskServiceImpl implements TaskService {
         LogUtil.success(
                 logMapper,
                 "INSERT",
-                "SUCCESS 插入库存" + inventory
+                "插入库存" + inventory
         );
 
         // 任务更新
@@ -189,7 +189,7 @@ public class TaskServiceImpl implements TaskService {
         LogUtil.success(
                 logMapper,
                 "UPDATE",
-                "SUCCESS 任务更新" + inventory
+                "任务更新" + inventory
         );
 
         // 库位表更新
@@ -216,6 +216,9 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public String createOutboundTask(MaterialContainer materialContainer) {
+
+        // 是否有对应库存?
+        if(materialContainerMapper.selectByContainerId(materialContainer.getContainerId()).isEmpty()) return null;
 
         // 接受任务
         Task task = new Task();
@@ -263,9 +266,10 @@ public class TaskServiceImpl implements TaskService {
         LogUtil.success(
                 logMapper,
                 "SELECT",
-                "SUCCESS WCS尝试获取出库任务"
+                "WCS尝试获取出库任务"
         );
 
+        // 获取最早的status为Created的任务
         Task task = taskMapper.getEarliestCreatedTask();
         if (task == null){
             LogUtil.fail(
@@ -279,7 +283,7 @@ public class TaskServiceImpl implements TaskService {
         LogUtil.success(
                 logMapper,
                 "SELECT",
-                "SUCCESS 获取出库任务" + task
+                "获取出库任务" + task
         );
         return task;
     }
@@ -297,13 +301,13 @@ public class TaskServiceImpl implements TaskService {
         task.setFinishTime(LocalDateTime.now());
         taskMapper.updateById(task);
 
-        // 删除库存表数据
-        LogUtil.success(
-                logMapper,
-                "DELETE",
-                "SUCCESS 删除库存"
-        );
-        inventoryMapper.deleteByContainerId(task.getContainerId());
+        // 删除绑定表数据
+        materialContainerMapper.deleteByBatch(task.getContainerId(), task.getMaterialId());
+
+        // 若库存表中容器中物料为0, 删除库存
+        List<MaterialContainer> li = materialContainerMapper.selectByContainerId(task.getContainerId());
+        if (li.isEmpty()) inventoryMapper.deleteByContainerId(task.getContainerId());
+
         return "出库任务完成";
     }
 

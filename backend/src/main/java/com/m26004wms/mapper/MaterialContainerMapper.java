@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 public interface MaterialContainerMapper extends BaseMapper<com.m26004wms.entity.MaterialContainer> {
 
     /**
@@ -15,16 +17,26 @@ public interface MaterialContainerMapper extends BaseMapper<com.m26004wms.entity
         DELETE FROM material_container
         WHERE container_id = #{containerId}
     """)
-    int deleteByContainerId(@Param("containerId") String containerId);
+    void deleteByContainerId(@Param("containerId") String containerId);
+
+
+    /**
+     * 根据 container_id 删除数据
+     */
+    @Delete("""
+        DELETE FROM material_container
+        WHERE container_id = #{containerId}
+              AND material_code = #{materialCode}
+    """)
+    void deleteByBatch(@Param("containerId") String containerId, @Param("materialCode") String materialCode);
 
 
     @Select("""
         SELECT *
         FROM material_container
         WHERE container_id = #{containerId}
-        LIMIT 1
     """)
-    MaterialContainer selectByContainerId(@Param("containerId") String containerId);
+    List<MaterialContainer> selectByContainerId(@Param("containerId") String containerId);
 
     @Select("""
         SELECT *

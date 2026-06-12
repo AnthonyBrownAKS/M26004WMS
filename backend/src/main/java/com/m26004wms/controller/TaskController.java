@@ -63,6 +63,7 @@ public class TaskController {
         log.setResult("SUCCESS 库位ID:" + location.getId());
         logMapper.insertWcs(log);
 
+        // 若为空则返回null
         return Result.success(location);
     }
 
@@ -77,8 +78,8 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
-        log.setParam("完成入库\n容器ID: " + inventory.getContainerId());
-        log.setResult("SUCCESS");
+        log.setParam("完成入库");
+        log.setResult("SUCCESS 容器ID:" + inventory.getContainerId());
         logMapper.insertWcs(log);
 
         return Result.success(taskService.inboundFinished(inventory));
@@ -114,8 +115,8 @@ public class TaskController {
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("获取出库任务\n任务:" + task);
-        log.setResult("SUCCESS");
+        log.setParam("获取出库任务");
+        log.setResult("SUCCESS 任务" + task);
         logMapper.insertWcs(log);
 
         return Result.success(task);

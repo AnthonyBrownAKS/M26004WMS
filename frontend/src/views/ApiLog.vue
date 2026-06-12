@@ -601,6 +601,8 @@ onMounted(() => {
 
   padding: 8px 10px;
 
+  height: 55px;
+
   border-bottom: 1px solid #edf1f5;
 
   text-align: center;
@@ -610,7 +612,7 @@ onMounted(() => {
 
 .log-table tbody tr {
 
-  height: 72px;
+  min-height:72px;
 
   transition: 0.15s;
 }
@@ -713,7 +715,7 @@ onMounted(() => {
 .json-box,
 .result-box {
 
-  max-height: 56px;
+  max-height: 72px;
 
   overflow-y: auto;
 
@@ -731,7 +733,7 @@ onMounted(() => {
 
   font-size: 11px;
 
-  line-height: 1.35;
+  line-height: 1.5;
 
   font-family:
       Consolas,
@@ -743,10 +745,10 @@ onMounted(() => {
   word-break: break-all;
 
   box-sizing: border-box;
+
+  display: block;
 }
 
-.json-box,
-.result-box,
 .time-text,
 .id-text {
 
@@ -759,7 +761,7 @@ onMounted(() => {
 
 .json-box,
 .result-box {
-
+  display: block;
   justify-content: flex-start;
 }
 
