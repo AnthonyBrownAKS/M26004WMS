@@ -1,108 +1,214 @@
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS yiwei DEFAULT CHARSET utf8mb4;
-USE yiwei;
+create table container
+(
+    id                     varchar(64)                           not null comment '主键ID'
+        primary key,
+    warehouse_id           varchar(64)                           not null comment '仓库ID',
+    code                   varchar(64)                           not null comment '容器编码',
+    barcode                varchar(128)                          null comment '条码',
+    container_type_id      varchar(64)                           null comment '容器类型ID',
+    load_state             varchar(50) default '0'               null comment '载荷状态',
+    location_id            varchar(64)                           null comment '库位ID',
+    is_stack               tinyint(1)  default 0                 null comment '是否可堆叠',
+    is_deleted             tinyint(1)  default 0                 null comment '是否删除',
+    deleter_id             varchar(64)                           null comment '删除人ID',
+    deletion_time          datetime                              null comment '删除时间',
+    last_modification_time datetime                              null comment '最后修改时间',
+    last_modifier_id       varchar(64)                           null comment '最后修改人ID',
+    creation_time          datetime    default CURRENT_TIMESTAMP null comment '创建时间',
+    creator_id             varchar(64)                           null comment '创建人ID',
+    extra_properties       text                                  null comment '扩展属性',
+    concurrency_stamp      varchar(64)                           null comment '并发控制'
+)
+    comment '容器表';
 
--- =========================
--- 1. 物料表 material
--- =========================
-CREATE TABLE material (
-material_id VARCHAR(50) PRIMARY KEY COMMENT '物料ID',
-material_code VARCHAR(50) COMMENT '物料编码',
-material_name VARCHAR(255) COMMENT '物料名称',
-in_time DATETIME COMMENT '入库时间',
-out_time DATETIME COMMENT '出库时间',
-status VARCHAR(50) COMMENT '状态'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table control_log
+(
+    id            int auto_increment comment '编号'
+        primary key,
+    type          varchar(64) null comment '操作类型',
+    result        text        null comment '结果',
+    param         text        null comment '内容',
+    creation_time datetime    null comment '操作时间'
+)
+    comment '操作日志';
 
--- =========================
--- 2. 容器表 container
--- =========================
-CREATE TABLE container (
-container_id VARCHAR(50) PRIMARY KEY COMMENT '容器ID',
-material_id VARCHAR(50) COMMENT '物料ID',
-quantity INT COMMENT '容量/数量',
-location_id VARCHAR(50) COMMENT '库位ID',
-status VARCHAR(50) COMMENT '状态(EMPTY/OCCUPIED/LOCKED)',
+create table customer_supplier
+(
+    warehouse_id           varchar(64)                          not null comment '所属仓库ID',
+    name                   varchar(100)                         not null comment '名称',
+    code                   varchar(50)                          not null comment '编码',
+    address                varchar(255)                         null comment '地址',
+    email                  varchar(100)                         null comment '邮箱',
+    phone                  varchar(20)                          null comment '电话',
+    is_customer            tinyint(1) default 0                 null comment '是否客户(0否1是)',
+    is_supplier            tinyint(1) default 0                 null comment '是否供应商(0否1是)',
+    is_owner               tinyint(1) default 0                 null comment '是否所有者(0否1是)',
+    is_deleted             tinyint(1) default 0                 null comment '逻辑删除(0未删1已删)',
+    deleter_id             varchar(64)                          null comment '删除人ID',
+    deletion_time          datetime                             null comment '删除时间',
+    last_modification_time datetime                             null comment '最后修改时间',
+    last_modifier_id       varchar(64)                          null comment '最后修改人ID',
+    creation_time          datetime   default CURRENT_TIMESTAMP null comment '创建时间',
+    creator_id             varchar(64)                          null comment '创建人ID',
+    extra_properties       text                                 null comment '扩展字段(JSON)',
+    concurrency_stamp      varchar(64)                          null comment '并发控制标识',
+    id                     varchar(64)                          not null comment '主键ID（UUID/String）'
+        primary key
+)
+    comment '客商表';
 
-```
-INDEX idx_material_id (material_id),
-INDEX idx_location_id (location_id),
+create table inbound
+(
+    id            bigint auto_increment
+        primary key,
+    material_code varchar(100) null,
+    material_name varchar(100) null,
+    spec          varchar(100) null,
+    container_id  varchar(100) null,
+    batch         varchar(100) null,
+    customer_code varchar(100) null,
+    quantity      int          null,
+    inbound_time  datetime     null
+);
 
-CONSTRAINT fk_container_material 
-    FOREIGN KEY (material_id) REFERENCES material(material_id),
+create table inventory
+(
+    id               int auto_increment comment 'ID'
+        primary key,
+    location_area_id varchar(64) null comment '库区(A左，B右，C地面)',
+    row_no           int         not null comment '行',
+    column_no        int         not null comment '列',
+    container_id     varchar(64) null comment '容器ID',
+    creation_time    datetime    null comment '创建时间',
+    location_id      varchar(64) null comment '库位ID'
+)
+    comment '库存表';
 
-CONSTRAINT fk_container_location 
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
-```
+create table location
+(
+    Id                   varchar(64)          not null comment '主键ID'
+        primary key,
+    WarehouseId          varchar(64)          not null comment '仓库ID',
+    LocationAreaId       varchar(64)          null comment '库区ID',
+    Code                 varchar(100)         not null comment '库位编码',
+    ShortCode            varchar(50)          null comment '短编码',
+    IsVirtually          tinyint(1) default 0 null comment '是否虚拟库位',
+    Direction            varchar(50)          null comment '方向',
+    `Row`                int                  null comment '行',
+    `Column`             int                  null comment '列',
+    Layer                int                  null comment '层',
+    Depth                int                  null comment '深度',
+    DepthNum             int                  null comment '深度编号',
+    MaxFullPalletNum     int                  null comment '最大满托数量',
+    MaxEmptyPalletNum    int                  null comment '最大空托数量',
+    IsAllowReceipt       tinyint(1) default 1 null comment '允许入库',
+    IsAllowSelect        tinyint(1) default 1 null comment '允许拣选',
+    ReceiptMode          varchar(50)          null comment '收货模式',
+    InboundMode          varchar(50)          null comment '入库模式',
+    InboundTrigMode      varchar(50)          null comment '入库触发模式',
+    IsWithPallet         tinyint(1) default 1 null comment '是否带托盘',
+    AllowInbound         tinyint(1) default 1 null comment '允许入库操作',
+    AllowOutbound        tinyint(1) default 1 null comment '允许出库操作',
+    CargoStatus          varchar(50)          null comment '货物状态',
+    LockState            varchar(50)          null comment '锁定状态',
+    LockContainerBarcode varchar(100)         null comment '锁定容器条码',
+    IsStocktake          tinyint(1) default 0 null comment '是否盘点中',
+    X                    decimal(10, 2)       null comment 'X坐标',
+    Y                    decimal(10, 2)       null comment 'Y坐标',
+    Width                decimal(10, 2)       null comment '宽度',
+    Height               decimal(10, 2)       null comment '高度',
+    IsDeleted            tinyint(1) default 0 null comment '是否删除',
+    ExtraProperties      varchar(100)         null comment '扩展属性',
+    ConcurrencyStamp     varchar(40)          null comment '并发控制'
+)
+    comment '库位表';
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table material
+(
+    id            varchar(64)                not null comment '主键ID'
+        primary key,
+    code          varchar(64)                not null comment '物料编码',
+    short_code    varchar(64)                null comment '简码',
+    name          varchar(100)               not null comment '物料名称',
+    spec          varchar(100)               null comment '规格',
+    is_unique     tinyint(1)  default 0      null comment '是否唯一(0否1是)',
+    validity_date int         default 0      null comment '有效期(天)',
+    abc_type      varchar(20) default 'NONE' null comment 'ABC分类',
+    safety_stock  int         default 0      null comment '安全库存',
+    creation_time datetime                   null comment '创建时间'
+)
+    comment '物料表';
 
--- =========================
--- 3. 库位表 location
--- =========================
-CREATE TABLE location (
-location_id VARCHAR(50) PRIMARY KEY COMMENT '库位ID',
-area VARCHAR(50) COMMENT '分区',
-row_no INT COMMENT '行',
-col_no INT COMMENT '列',
-level_no INT COMMENT '层',
-status VARCHAR(50) COMMENT '状态(FREE/OCCUPIED)',
-container_id VARCHAR(50) COMMENT '容器ID',
+create table material_container
+(
+    material_code varchar(64) null comment '物料编码',
+    container_id  varchar(64) null comment '容器ID',
+    quantity      int         null comment '数量',
+    batch         varchar(50) null comment '批次',
+    creation_time datetime    null comment '创建日期',
+    id            int auto_increment comment 'ID'
+        primary key,
+    customer_code varchar(64) null comment '客商代码'
+)
+    comment '物料容器绑定表';
 
-```
-INDEX idx_container_id (container_id),
+create table outbound
+(
+    material_code varchar(64) null comment '物料编码',
+    container_id  varchar(64) null comment '容器ID',
+    batch         varchar(50) null comment '批次号',
+    customer_code varchar(64) null comment '客商代码',
+    quantity      int         null comment '数量',
+    out_time      datetime    null comment '出库时间',
+    id            int auto_increment comment '出库记录ID'
+        primary key,
+    material_name varchar(64) null comment '物料名称',
+    spec          varchar(64) null comment '物料规格'
+)
+    comment '出库记录';
 
-CONSTRAINT fk_location_container 
-    FOREIGN KEY (container_id) REFERENCES container(container_id)
-```
+create table task
+(
+    task_id            varchar(50) not null comment '任务ID'
+        primary key,
+    task_type          varchar(50) null comment '任务类型(IN/OUT)',
+    status             varchar(50) null comment '状态(CREATED/RUNNING/FINISHED/FAILED)',
+    container_id       varchar(50) null,
+    material_id        varchar(50) null,
+    source_location_id varchar(50) null,
+    target_location_id varchar(50) null,
+    create_time        datetime    null,
+    execute_time       datetime    null,
+    finish_time        datetime    null
+);
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+create table task_log
+(
+    log_id  varchar(50)  not null comment '日志ID'
+        primary key,
+    task_id varchar(50)  null comment '任务ID',
+    step    varchar(255) null comment '任务阶段',
+    message varchar(255) null comment '阶段说明',
+    time    datetime     null comment '记录时间'
+);
 
--- =========================
--- 4. 任务表 task
--- =========================
-CREATE TABLE task (
-task_id VARCHAR(50) PRIMARY KEY COMMENT '任务ID',
-task_type VARCHAR(50) COMMENT '任务类型(IN/OUT)',
-status VARCHAR(50) COMMENT '状态(CREATED/RUNNING/FINISHED/FAILED)',
+create table user
+(
+    id       varchar(50) null comment '用户ID',
+    username varchar(64) null comment '用户名',
+    name     varchar(64) null comment '职责名称',
+    email    varchar(64) null comment '邮箱'
+)
+    comment '用户表';
 
-```
-container_id VARCHAR(50),
-material_id VARCHAR(50),
-source_location_id VARCHAR(50),
-target_location_id VARCHAR(50),
+create table wcs_log
+(
+    id            int auto_increment comment '接口序号'
+        primary key,
+    type          varchar(64) null comment '出入库类型',
+    result        text        null comment '传出数据',
+    param         text        null comment '传入数据',
+    creation_time datetime    null comment '调用日期'
+)
+    comment 'WCS层接口日志';
 
-create_time DATETIME,
-execute_time DATETIME,
-finish_time DATETIME,
-
-INDEX idx_container_id (container_id),
-INDEX idx_material_id (material_id),
-
-CONSTRAINT fk_task_container 
-    FOREIGN KEY (container_id) REFERENCES container(container_id),
-
-CONSTRAINT fk_task_material 
-    FOREIGN KEY (material_id) REFERENCES material(material_id)
-```
-
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- =========================
--- 5. 任务日志表 task_log
--- =========================
-CREATE TABLE task_log (
-log_id VARCHAR(50) PRIMARY KEY COMMENT '日志ID',
-task_id VARCHAR(50) COMMENT '任务ID',
-step VARCHAR(255) COMMENT '任务阶段',
-message VARCHAR(255) COMMENT '阶段说明',
-time DATETIME COMMENT '记录时间',
-
-```
-INDEX idx_task_id (task_id),
-
-CONSTRAINT fk_log_task 
-    FOREIGN KEY (task_id) REFERENCES task(task_id)
-```
-
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
