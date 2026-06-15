@@ -143,6 +143,16 @@
           库存管理
         </div>
 
+        <!-- 库位 -->
+
+        <div
+            class="menu-item"
+            :class="{ active: route.path === '/location' }"
+            @click="go('/location')"
+        >
+          库位管理
+        </div>
+
         <!-- 日志管理 -->
 
         <div class="menu-group">

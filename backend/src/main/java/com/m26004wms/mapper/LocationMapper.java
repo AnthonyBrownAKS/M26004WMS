@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface LocationMapper extends BaseMapper<Location> {
 
@@ -13,8 +15,8 @@ public interface LocationMapper extends BaseMapper<Location> {
     @Select("SELECT * FROM location WHERE status = 'FREE' LIMIT 1 FOR UPDATE")
     Location selectEmptyLocationForUpdate();
 
-    @Select("SELECT * FROM location WHERE CargoStatus = 'EMPTY' LIMIT 1")
-    Location selectEmptyLocation();
+    @Select("SELECT * FROM location WHERE CargoStatus = 'EMPTY' AND LockState= 'NONE'")
+    List<Location> selectEmptyLocation();
 
     @Select("SELECT * FROM location WHERE LocationAreaId = #{locationAreaId}")
     Location selectLocationByLocationAreaId(@Param("locationAreaId") String locationAreaId);

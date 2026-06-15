@@ -86,6 +86,7 @@ public class TaskServiceImpl implements TaskService {
         // 入库记录
         Material m = materialMapper.getByCustomerCode(mc.getMaterialCode());
         Inbound in = new Inbound();
+        in.setMaterialCode(m.getCode());
         in.setMaterialName(m.getName());
         in.setBatch(mc.getBatch());
         in.setSpec(m.getSpec());
@@ -105,15 +106,58 @@ public class TaskServiceImpl implements TaskService {
      * 分配货位
      */
     @Override
-    public Location getLocation(){
+    public Location getLocation() {
 
+        List<Location> locations = locationMapper.selectEmptyLocation();
+
+        // ================= 1. 过滤第一行 + 底层 =================
+        List<Location> row1Layer1 = locations.stream()
+                .filter(l -> l.getRow() == 1 && l.getLayer() == 1)
+                .toList();
+
+        // ================= 2. 找中心点 =================
+        int maxCol = row1Layer1.stream()
+                .mapToInt(Location::getColumn)
+                .max()
+                .orElse(0);
+
+        int center = maxCol / 2;
+
+        // ================= 3. 按“离中心距离”排序 =================
+        // 距离一样时：优先左边（可选策略）
+        Location best = row1Layer1.stream().min((a, b) -> {
+                    int da = Math.abs(a.getColumn() - center);
+                    int db = Math.abs(b.getColumn() - center);
+
+                    if (da != db) {
+                        return Integer.compare(da, db);
+                    }
+
+                    // 距离一样时：优先左边（可选策略）
+                    return Integer.compare(a.getColumn(), b.getColumn());
+                })
+                .orElse(null);
+
+        // ================= 4. 如果第一行没有，再扩展到其他行 =================
+        if (best == null) {
+
+            best = locations.stream()
+                    .filter(l -> l.getLayer() == 1).min((a, b) -> {
+                        int da = Math.abs(a.getColumn() - 9);
+                        int db = Math.abs(b.getColumn() - 9);
+                        return Integer.compare(da, db);
+                    })
+                    .orElse(null);
+        }
+
+        // ================= 5. 日志 =================
         LogUtil.success(
                 logMapper,
                 "SELECT",
-                "货位获取"
+                "智能分配库位：" + (best != null ? best.getId() : "NULL")
         );
 
-        return locationMapper.selectEmptyLocation();
+        return best;
     }
 
     /**
@@ -180,7 +224,6 @@ public class TaskServiceImpl implements TaskService {
 
         // 库位表更新
         location.setCargoStatus("FULL");
-        location.setLockState("INBOUND_LOCK");
         location.setLockContainerBarcode(inventory.getContainerId());
         locationMapper.updateById(location);
 
@@ -265,6 +308,10 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.updateById(task);
 
         // 解绑库位与容器
+        Location location = locationMapper.selectById(task.getTargetLocationId());
+        location.setLockContainerBarcode("NONE");
+        location.setCargoStatus("EMPTY");
+        locationMapper.insertOrUpdate(location);
         inventoryMapper.deleteByContainerId(task.getContainerId());
 
         return "出库任务完成";
@@ -394,16 +441,16 @@ public class TaskServiceImpl implements TaskService {
     /**
      * 入库处理
      * 事务处理
+     * 已弃用
      */
     @Transactional
     @Override
     public Location handleInbound(Task task) {
         // 尝试分配空库位
-        Location location = locationMapper.selectEmptyLocation();
-
+        //Location location = locationMapper.selectEmptyLocation();
         // ====================WCS======================
         // 返回location_area_id, row_no, column_no给WCS层
-        return location;
+        return new Location();
     }
 
 

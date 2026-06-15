@@ -28,6 +28,7 @@ import ApiLog
 
 import System
     from '@/views/System.vue'
+import LocationView from "@/views/LocationView.vue";
 
 const routes = [
 
@@ -110,6 +111,13 @@ const routes = [
                 path: 'system',
 
                 component: System
+
+            },
+
+            {
+                path: 'location',
+
+                component: LocationView
 
             }
 

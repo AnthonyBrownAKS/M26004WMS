@@ -6,7 +6,9 @@ import com.m26004wms.dto.LocationExcelDTO;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Location;
 import com.m26004wms.entity.Material;
+import com.m26004wms.mapper.LocationMapper;
 import com.m26004wms.service.LocationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/location")
@@ -22,6 +25,9 @@ public class LocationController {
 
     @Resource
     private LocationService service;
+
+    @Autowired
+    private LocationMapper locationMapper;
 
     // =========================
     // Excel导入
@@ -66,4 +72,18 @@ public class LocationController {
                 .sheet("货位数据")
                 .doWrite(list);
     }
+
+    @GetMapping("/list")
+    public Result<List<Location>> getAll(){
+        return Result.success(locationMapper.selectList(null));
+    }
+
+    @PostMapping("/{id}")
+    public Result<String> lock(@PathVariable String id){
+        Location location = locationMapper.selectById(id);
+        location.setLockState(Objects.equals(location.getLockState(), "NONE") ? "INBOUND_LOCK" : "NONE");
+        locationMapper.insertOrUpdate(location);
+        return Result.success("更新成功");
+    }
+
 }
