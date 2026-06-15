@@ -33,12 +33,19 @@ public interface InventoryMapper extends BaseMapper<Inventory> {
     int deleteByContainerId(@Param("containerId") String containerId);
 
     @Select("""
-        SELECT location_area_id
+        SELECT location_id
         FROM inventory
         WHERE container_id = #{containerId}
-        LIMIT 1
     """)
     String getLocationAreaIdByContainerId(@Param("containerId") String containerId);
+
+
+    @Select("""
+        SELECT *
+        FROM inventory
+        WHERE container_id = #{containerId}
+    """)
+    List<Inventory> exists(@Param("containerId") String containerId);
 
 
     /**

@@ -63,10 +63,6 @@
               完成时间
             </th>
 
-            <th style="width: 120px">
-              物料ID
-            </th>
-
             <th style="width: 140px">
               目标库位
             </th>
@@ -103,8 +99,6 @@
             <td>
               {{ formatTime(item.finishTime) }}
             </td>
-
-            <td>{{ item.materialId }}</td>
 
             <td>{{ item.targetLocationId }}</td>
 
@@ -220,19 +214,6 @@
             <input
                 v-model="editForm.containerId"
                 placeholder="请输入容器ID"
-            >
-
-          </div>
-
-          <div class="dialog-item">
-
-            <label>
-              物料ID
-            </label>
-
-            <input
-                v-model="editForm.materialId"
-                placeholder="请输入物料ID"
             >
 
           </div>
@@ -413,9 +394,9 @@ const editForm = ref({
 
 const taskTypeMap = {
 
-  IN: '入库',
+  INBOUND: '入库',
 
-  OUT: '出库'
+  OUTBOUND: '出库'
 
 }
 

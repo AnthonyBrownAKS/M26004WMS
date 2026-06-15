@@ -76,6 +76,8 @@
 
             <th>列</th>
 
+            <th>层</th>
+
             <th>存放物料量</th>
 
             <th>创建时间</th>
@@ -132,6 +134,10 @@
                 {{ item.columnNo }}
               </td>
 
+              <td>
+                {{ item.layerNo }}
+              </td>
+
               <td class="sum-cell">
                 {{ item.sum }}
               </td>
@@ -158,7 +164,7 @@
                       class="table-delete-btn"
                       @click="openDelete(item)"
                   >
-                    删除
+                    出库
                   </button>
 
                 </div>
@@ -174,7 +180,7 @@
                 class="expand-row"
             >
 
-              <td colspan="8">
+              <td colspan="9">
 
                 <div
                     v-if="detailMap[item.id]?.length"
@@ -311,7 +317,7 @@
                     v-else
                     class="empty-detail"
                 >
-                  暂无数据
+                  暂无物料
                 </div>
 
               </td>
@@ -390,26 +396,6 @@
 
           <div class="dialog-item">
 
-            <label>物料编码</label>
-
-            <input
-                v-model="editForm.materialCode"
-            >
-
-          </div>
-
-          <div class="dialog-item">
-
-            <label>客商代码</label>
-
-            <input
-                v-model="editForm.customerCode"
-            >
-
-          </div>
-
-          <div class="dialog-item">
-
             <label>容器ID</label>
 
             <input
@@ -418,50 +404,10 @@
 
           </div>
 
-          <div class="dialog-item">
-
-            <label>数量</label>
-
-            <div class="number-input">
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.quantity--"
-              >
-                -
-              </button>
-
-              <input
-                  type="number"
-                  v-model="editForm.quantity"
-              >
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.quantity++"
-              >
-                +
-              </button>
-
-            </div>
-
-          </div>
 
           <div class="dialog-item">
 
-            <label>批次</label>
-
-            <input
-                v-model="editForm.batch"
-            >
-
-          </div>
-
-          <div class="dialog-item">
-
-            <label>库区</label>
+            <label>库区ID</label>
 
             <input
                 v-model="editForm.locationAreaId"
@@ -469,67 +415,6 @@
 
           </div>
 
-          <div class="dialog-item">
-
-            <label>行</label>
-
-            <div class="number-input">
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.rowNo--"
-              >
-                -
-              </button>
-
-              <input
-                  type="number"
-                  v-model="editForm.rowNo"
-              >
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.rowNo++"
-              >
-                +
-              </button>
-
-            </div>
-
-          </div>
-
-          <div class="dialog-item">
-
-            <label>列</label>
-
-            <div class="number-input">
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.columnNo--"
-              >
-                -
-              </button>
-
-              <input
-                  type="number"
-                  v-model="editForm.columnNo"
-              >
-
-              <button
-                  type="button"
-                  class="number-btn"
-                  @click="editForm.columnNo++"
-              >
-                +
-              </button>
-
-            </div>
-
-          </div>
 
         </div>
 
@@ -640,7 +525,7 @@
 
     </div>
 
-    <!-- 删除 -->
+    <!-- 出库 -->
 
     <div
         v-if="deleteVisible"
@@ -650,7 +535,7 @@
       <div class="dialog delete-dialog">
 
         <div class="delete-title">
-          确认删除该库存？
+          确认出库？
         </div>
 
         <div class="dialog-buttons">
@@ -873,21 +758,9 @@ const openAdd = () => {
 
     id:'',
 
-    materialCode: '',
-
-    customerCode: '',
-
     containerId: '',
 
-    quantity: 0,
-
-    batch: '',
-
     locationAreaId: '',
-
-    rowNo: 0,
-
-    columnNo: 0
 
   }
 
@@ -909,22 +782,6 @@ const openEdit = (row) => {
 
 const submitEdit = async () => {
 
-  // 数量必须是数字
-  if (isNaN(editForm.value.quantity)) {
-
-    showMessage('数量必须为数字', 'error')
-    return
-
-  }
-
-  // 数量必须大于0
-  if (Number.isNaN(Number(editForm.value.quantity))) {
-
-    showMessage('数量必须大于0', 'error')
-    return
-
-  }
-
   // 容器ID必须以PT开头
   if (!editForm.value.containerId.startsWith('PT')) {
 
@@ -932,7 +789,6 @@ const submitEdit = async () => {
     return
 
   }
-
 
   try {
 
@@ -967,7 +823,7 @@ const submitEdit = async () => {
 
 const openDelete = (row) => {
 
-  deleteId.value = row.id
+  deleteId.value = row.containerId
 
   deleteVisible.value = true
 
@@ -977,13 +833,13 @@ const confirmDelete = async () => {
 
   try {
 
-    const res = await axios.delete(
-        `/api/inventory/${deleteId.value}`
+    const res = await axios.post(
+        `/api/task/createOutbound/${deleteId.value}`
     )
 
     if (res.data.code === 200) {
 
-      showMessage('删除成功', 'success')
+      showMessage('出库成功', 'success')
 
       deleteVisible.value = false
 
@@ -995,7 +851,7 @@ const confirmDelete = async () => {
 
     console.error(e)
 
-    showMessage('删除失败', 'error')
+    showMessage('出库失败', 'error')
 
   }
 
@@ -1355,7 +1211,7 @@ onMounted(() => {
 
 .table-delete-btn {
 
-  background: #f56c6c;
+  background: #3cb1a8;
 }
 
 .pagination {
@@ -1550,7 +1406,7 @@ onMounted(() => {
 
   text-align: center;
 
-  font-size: 25px;
+  font-size: 20px;
 
   margin-bottom: 22px;
 }

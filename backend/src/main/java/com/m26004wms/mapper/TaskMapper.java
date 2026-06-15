@@ -11,6 +11,14 @@ import java.util.List;
 @Mapper
 public interface TaskMapper extends BaseMapper<Task> {
 
+    @Select("""
+        SELECT *
+        FROM task
+        WHERE task_id = #{taskId}
+    """)
+    Task getTask(@Param("taskId") String taskId);
+
+
     /**
      * 指定container_id 寻找存在 status 为 CREATED 的任务
      */
@@ -40,7 +48,8 @@ public interface TaskMapper extends BaseMapper<Task> {
     @Select("""
         SELECT *
         FROM task
-        WHERE status = 'CREATED'
+        WHERE status = 'CREATED' 
+        AND task_type = 'OUTBOUND'
         ORDER BY create_time ASC
         LIMIT 1
     """)

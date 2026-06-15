@@ -8,12 +8,14 @@ import com.m26004wms.common.Result;
 import com.m26004wms.dto.MaterialExcelDTO;
 import com.m26004wms.entity.Material;
 import com.m26004wms.entity.MaterialContainer;
+import com.m26004wms.entity.MaterialRequest;
 import com.m26004wms.entity.Outbound;
 import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.MaterialContainerMapper;
 import com.m26004wms.mapper.MaterialMapper;
 import com.m26004wms.service.MaterialService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -136,13 +140,46 @@ public class MaterialController {
     }
 
     /**
-     * 查询全部
+     * 查询全部已绑定容器的物料
+     */
+    @GetMapping("/listC")
+    public Result<List<MaterialRequest>> listC() {
+
+        List<MaterialContainer> list = materialContainerMapper.selectList(null);
+        List<MaterialRequest> materials = new LinkedList<>();
+        Material material;
+
+        for(MaterialContainer mc : list){
+            material = materialMapper.getByCustomerCode(mc.getMaterialCode());
+
+            MaterialRequest materialRequest = getMaterialRequest(mc, material);
+
+            materials.add(materialRequest);
+        }
+
+        return Result.success(materials);
+    }
+
+    private static @NonNull MaterialRequest getMaterialRequest(MaterialContainer mc, Material material) {
+        MaterialRequest materialRequest = new MaterialRequest();
+
+        materialRequest.setId(material.getId());
+        materialRequest.setName(material.getName());
+        materialRequest.setSpec(material.getSpec());
+        materialRequest.setCode(material.getCode());
+        materialRequest.setContainerId(mc.getContainerId());
+        materialRequest.setBatch(mc.getBatch());
+        materialRequest.setQuantity(mc.getQuantity());
+        materialRequest.setCustomerCode(mc.getCustomerCode());
+        return materialRequest;
+    }
+
+    /**
+     * 查询全部物料
      */
     @GetMapping("/list")
     public Result<List<Material>> list() {
-
         return Result.success(materialService.list());
-
     }
 
     /**

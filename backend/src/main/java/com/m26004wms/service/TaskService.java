@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface TaskService {
 
+    String updateStatus(String taskId, String status);
+
     /**
      * 绑定容器ID与物料
      */
@@ -17,16 +19,20 @@ public interface TaskService {
      */
     Location getLocation();
 
+    String getTask(Location location, String code);
+
     /**
      * WCS入库接口2
      * 完成入库, 插入库存
      */
-    String inboundFinished(Inventory inventory);
+    String inboundFinished(String taskId);
 
     /**
      * 创建出库任务
      */
-    String createOutboundTask(MaterialContainer materialContainer);
+    String createOutboundTask(String containerId);
+
+    String outboundMC(MaterialContainer materialContainer);
 
     /**
      * WCS出库接口1

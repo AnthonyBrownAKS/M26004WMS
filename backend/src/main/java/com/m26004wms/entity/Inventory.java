@@ -17,6 +17,7 @@ public class Inventory {
 
     private Integer rowNo;
     private Integer columnNo;
+    private Integer layerNo;
     private String containerId;
     private LocalDateTime creationTime;
     private String locationId;

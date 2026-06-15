@@ -2,6 +2,8 @@ package com.m26004wms.controller;
 
 import com.m26004wms.common.LogUtil;
 import com.m26004wms.entity.*;
+import com.m26004wms.mapper.InventoryMapper;
+import com.m26004wms.mapper.LocationMapper;
 import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.mapper.TaskMapper;
 import com.m26004wms.service.TaskService;
@@ -25,6 +27,12 @@ public class TaskController {
     @Autowired
     private LogMapper logMapper;
 
+    @Autowired
+    private LocationMapper locationMapper;
+
+    @Autowired
+    private InventoryMapper inventoryMapper;
+
     /**
      * 绑定程序√
      * 传入 Scan 类 materialCode, quantity, containerId, customerCode
@@ -47,13 +55,29 @@ public class TaskController {
     }
 
     /**
+     * WCS接口0
+     * 更新状态
+     * 任务与任务状态
+     */
+    @PostMapping("/status")
+    public Result<String> updateStatus(@RequestBody Task task){
+        String res = taskService.updateStatus(task.getTaskId(), task.getStatus());
+        if (res == null) return Result.fail("任务不存在");
+        return Result.success(res);
+    }
+
+    /**
      * WCS接口1
      * 分配库位√
+     * code:PT0012
      */
     @GetMapping("/getLocation")
-    public Result<Location> getLocation(@RequestBody String code){
+    public Result<LocationRequest> getLocation(@RequestParam String code){
+        // 检查是否有重复容器
+        if (!inventoryMapper.exists(code).isEmpty()) return Result.fail("容器已存在");
 
         Location location = taskService.getLocation();
+        String taskId = taskService.getTask(location, code);
         if (location == null) return Result.fail("货位没有空位!");
 
         // WCS日志
@@ -64,42 +88,45 @@ public class TaskController {
         logMapper.insertWcs(log);
 
         // 若为空则返回null
-        return Result.success(location);
+        return Result.success(new LocationRequest(location, taskId));
     }
 
     /**
      * WCS接口2
      * 完成入库
-     * 传入值命名规范: locationAreaId, rowNo, columnNo, containerId, locationId
+     * 传入值命名规范: TaskId
      */
     @PostMapping("/finishedInbound")
-    public Result<String> taskFinished(@RequestBody Inventory inventory){
+    public Result<String> taskFinished(@RequestParam String taskId){
 
         // WCS日志
         Logs log = new Logs();
         log.setType("INBOUND");
         log.setParam("完成入库");
-        log.setResult("SUCCESS 容器ID:" + inventory.getContainerId());
+        log.setResult("SUCCESS 任务ID:" + taskId);
         logMapper.insertWcs(log);
 
-        return Result.success(taskService.inboundFinished(inventory));
+        return Result.success(taskService.inboundFinished(taskId));
     }
 
     /**
      * 创建出库任务
      * 传入值: materialCode, batch, containerId, customerCode, quantity
      */
+    @PostMapping("/createOutbound/{containerId}")
+    public Result<String> createOutbound(@PathVariable String containerId) {
+        String message = taskService.createOutboundTask(containerId);
+
+        return Result.success(message);
+    }
+
+    /**
+     * 解绑容器物料
+     * 传入值: materialCode, batch, containerId, customerCode, quantity
+     */
     @PostMapping("/outbound")
-    public Result<String> createOutbound(@RequestBody MaterialContainer mc) {
-        String message = taskService.createOutboundTask(mc);
-
-        // WCS日志
-        Logs log = new Logs();
-        log.setType("INSERT");
-        log.setParam("创建出库任务\n信息:" + mc);
-        log.setResult("SUCCESS");
-        logMapper.insertControl(log);
-
+    public Result<String> outbound(@RequestBody MaterialContainer mc) {
+        String message = taskService.outboundMC(mc);
         return Result.success(message);
     }
 
@@ -109,17 +136,23 @@ public class TaskController {
      * 获取出库任务
      */
     @GetMapping("/getTask")
-    public Result<Task> getTask(){
+    public Result<OutboundRequest> getTask(){
         Task task = taskService.getOutboundTask();
+        if (task == null) return Result.fail("没有出库任务");
 
         // WCS日志
         Logs log = new Logs();
         log.setType("OUTBOUND");
-        log.setParam("获取出库任务");
+        log.setParam("获取到出库任务");
         log.setResult("SUCCESS 任务" + task);
         logMapper.insertWcs(log);
 
-        return Result.success(task);
+        // 返回处理
+        Location location = locationMapper.selectById(task.getTargetLocationId());
+        if(location == null) return Result.success(null);
+
+        OutboundRequest or = new OutboundRequest(task, location.getRow(), location.getColumn(), location.getLayer());
+        return Result.success(or);
     }
 
     /**

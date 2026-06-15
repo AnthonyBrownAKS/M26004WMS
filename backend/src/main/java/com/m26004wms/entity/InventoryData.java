@@ -24,6 +24,7 @@ public class InventoryData {
 
     private Integer rowNo;
     private Integer columnNo;
+    private Integer layerNo;
 
     private LocalDateTime creationTime;
 

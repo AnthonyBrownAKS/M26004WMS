@@ -3,11 +3,9 @@ package com.m26004wms.controller;
 
 import com.m26004wms.common.LogUtil;
 import com.m26004wms.common.Result;
-import com.m26004wms.entity.Inventory;
-import com.m26004wms.entity.InventoryData;
-import com.m26004wms.entity.Logs;
-import com.m26004wms.entity.Material;
+import com.m26004wms.entity.*;
 import com.m26004wms.mapper.InventoryMapper;
+import com.m26004wms.mapper.LocationMapper;
 import com.m26004wms.mapper.LogMapper;
 import com.m26004wms.service.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +29,8 @@ public class InventoryController {
 
     @Autowired
     private LogMapper logMapper;
+    @Autowired
+    private LocationMapper locationMapper;
 
     /**
      * 分页查询
@@ -116,6 +116,12 @@ public class InventoryController {
                     type,
                     "修改库存EDIT " + inventoryData
             );
+
+            Location location = locationMapper.selectById(inventoryData.getId());
+            inventoryData.setColumnNo(location.getColumn());
+            inventoryData.setLayerNo(location.getLayer());
+            inventoryData.setRowNo(location.getRow());
+            inventoryData.setLocationAreaId("A");
 
             inventoryService.add(inventoryData);
             return Result.success();

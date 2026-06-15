@@ -7,7 +7,7 @@
     <div class="card table-card">
 
       <div class="card-title">
-        入库任务列表
+        物料入库记录
       </div>
 
       <!-- 查询 -->
@@ -163,9 +163,8 @@
     <div class="card">
 
       <div class="card-title">
-        入库管理
+        物料入库绑定
       </div>
-
 
 
       <div class="form-grid">
@@ -974,6 +973,8 @@ onMounted(() => {
 .search-bar input,
 .dialog input {
 
+  width: 150px
+;
   height: 42px;
 
   border: 1px solid #dcdfe6;

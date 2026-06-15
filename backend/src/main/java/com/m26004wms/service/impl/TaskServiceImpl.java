@@ -1,6 +1,7 @@
 package com.m26004wms.service.impl;
 
 import com.m26004wms.common.LogUtil;
+import com.m26004wms.common.Result;
 import com.m26004wms.entity.*;
 import com.m26004wms.mapper.*;
 import com.m26004wms.mapper.MaterialContainerMapper;
@@ -51,78 +52,51 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private LogMapper logMapper;
 
+
+    @Override
+    public String updateStatus(String taskId, String status){
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) return null;
+        task.setStatus(status);
+        taskMapper.insertOrUpdate(task);
+        return "SUCCESS";
+    }
+
     /**
      * 绑定任务
      */
     @Transactional
     @Override
     public String createInboundTask(Scan scan) {
+        // 任务记录操作内容
+        LocalDateTime time = LocalDateTime.now();
+        // material_container绑定物料与容器
+        MaterialContainer mc = new MaterialContainer();
 
-        try{
-            // 库存已经存在?
+        mc.setMaterialCode(scan.getMaterialCode());
+        mc.setContainerId(scan.getContainerId());
+        mc.setQuantity(scan.getQuantity());
+        mc.setCustomerCode(scan.getCustomerCode());
 
+        // 批次定义
+        mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+        mc.setCreationTime(time);
+        materialContainerMapper.insertOrUpdate(mc);
 
-            // 库存表提前占用
-            Inventory inventory = new Inventory();
-            inventory.setLocationAreaId("C");
-            inventory.setRowNo(1);
-            inventory.setColumnNo(1);
-            inventory.setContainerId(scan.getContainerId());
-            inventory.setCreationTime(LocalDateTime.now());
-            inventoryMapper.insertOrUpdate(inventory);
+        // 入库记录
+        Material m = materialMapper.getByCustomerCode(mc.getMaterialCode());
+        Inbound in = new Inbound();
+        in.setMaterialName(m.getName());
+        in.setBatch(mc.getBatch());
+        in.setSpec(m.getSpec());
+        in.setInboundTime(LocalDateTime.now());
+        in.setQuantity(mc.getQuantity());
+        in.setContainerId(mc.getContainerId());
+        in.setCustomerCode(mc.getCustomerCode());
 
-            // 接受任务
-            Task task = new Task();
+        inboundMapper.insertOrUpdate(in);
 
-            // 初始化设置
-            task.setTaskId(UUID.randomUUID().toString());
-            task.setTaskType("IN");
-            task.setStatus("CREATED");
-
-            // 任务记录操作内容
-            LocalDateTime time = LocalDateTime.now();
-
-            task.setMaterialId(scan.getMaterialCode());
-            task.setContainerId(scan.getContainerId());
-            task.setCreateTime(time);
-
-            // material_container绑定物料与容器
-            MaterialContainer mc = new MaterialContainer();
-
-            mc.setMaterialCode(scan.getMaterialCode());
-            mc.setContainerId(scan.getContainerId());
-            mc.setQuantity(scan.getQuantity());
-            mc.setCustomerCode(scan.getCustomerCode());
-
-            // 批次定义
-            mc.setBatch(time.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
-            mc.setCreationTime(time);
-            materialContainerMapper.insertOrUpdate(mc);
-
-            //记录任务
-            Inbound in = new Inbound();
-            Material material = materialMapper.getByCustomerCode(scan.getMaterialCode());
-
-            in.setMaterialCode(material.getCode());
-            in.setMaterialName(material.getName());
-            in.setSpec(material.getSpec());
-            in.setContainerId(scan.getContainerId());
-            in.setBatch(mc.getBatch());
-            in.setCustomerCode(scan.getCustomerCode());
-            in.setQuantity(scan.getQuantity());
-            in.setInboundTime(LocalDateTime.now());
-
-            inboundMapper.insert(in);
-
-            // 任务进入队列
-            // taskQueue.addTask(task);
-            taskMapper.insert(task);
-
-
-            return task.getTaskId();
-        }catch (Exception e){
-            return null;
-        }
+        return "ok";
     }
 
 
@@ -143,31 +117,45 @@ public class TaskServiceImpl implements TaskService {
     }
 
     /**
+     * WCS入库接口1-2
+     * 生成任务
+     */
+    @Override
+    public String getTask(Location location, String code){
+
+
+        Task task = new Task();
+        task.setContainerId(code);
+        task.setStatus("CREATED");
+        task.setTaskType("INBOUND");
+        task.setCreateTime(LocalDateTime.now());
+        task.setTaskId(UUID.randomUUID().toString());
+        task.setTargetLocationId(location.getId());
+        taskMapper.insertOrUpdate(task);
+
+        return task.getTaskId();
+    }
+
+    /**
      * WCS入库接口2
      * 完成入库
      */
     @Override
-    public String inboundFinished(Inventory inventory) {
-        // 删除占位库存
-        try{
+    public String inboundFinished(String taskId) {
 
-            LogUtil.success(
-                    logMapper,
-                    "DELETE",
-                    "库存" + inventory
-            );
+        Task task = taskMapper.getTask(taskId);
+        if (task == null) return "任务ID不存在: "+ taskId;
 
-            inventoryMapper.deleteByContainerIdAndArea(inventory.getContainerId(), "C");
-        }catch (Exception e){
+        Inventory inventory = new Inventory();
 
-            LogUtil.fail(
-                    logMapper,
-                    "DELETE",
-                    "FAIL " + "占位数据异常",
-                    "删除库存" + inventory
-            );
-            return "没有占位数据:" + e;
-        }
+        Location location = locationMapper.selectById(task.getTargetLocationId());
+
+        inventory.setLayerNo(location.getLayer());
+        inventory.setColumnNo(location.getColumn());
+        inventory.setRowNo(location.getRow());
+        inventory.setContainerId(task.getContainerId());
+        inventory.setLocationId(task.getTargetLocationId());
+        inventory.setLocationAreaId("A");
 
         // 插入库存
         inventory.setCreationTime(LocalDateTime.now());
@@ -180,10 +168,8 @@ public class TaskServiceImpl implements TaskService {
         );
 
         // 任务更新
-        Task task = taskMapper.selectCreatedTaskByContainerId(inventory.getContainerId());
-        task.setTargetLocationId(inventory.getLocationAreaId());
-        task.setFinishTime(LocalDateTime.now());
         task.setStatus("FINISHED");
+        task.setFinishTime(LocalDateTime.now());
         taskMapper.updateById(task);
 
         LogUtil.success(
@@ -193,17 +179,10 @@ public class TaskServiceImpl implements TaskService {
         );
 
         // 库位表更新
-        // Location location = locationMapper.selectById(inventory.getLocationId());
-        // location.setCargoStatus("FULL");
-        // location.setLockState("INBOUND_LOCK");
-        // location.setLockContainerBarcode(inventory.getContainerId());
-        // locationMapper.updateById(location);
-//
-        // LogUtil.success(
-        //         logMapper,
-        //         "UPDATE",
-        //         "库位表更新 " + inventory
-        // );
+        location.setCargoStatus("FULL");
+        location.setLockState("INBOUND_LOCK");
+        location.setLockContainerBarcode(inventory.getContainerId());
+        locationMapper.updateById(location);
 
         // 异常?
 
@@ -215,13 +194,32 @@ public class TaskServiceImpl implements TaskService {
      * 创建出库任务
      */
     @Override
-    public String createOutboundTask(MaterialContainer materialContainer) {
-
-        // 是否有对应库存?
-        if(materialContainerMapper.selectByContainerId(materialContainer.getContainerId()).isEmpty()) return null;
+    public String createOutboundTask(String containerId) {
+        // 重复出库异常？
 
         // 接受任务
         Task task = new Task();
+
+        // 设置原位置
+        task.setTargetLocationId(inventoryMapper.getLocationAreaIdByContainerId(containerId));
+
+        String id = UUID.randomUUID().toString();
+        task.setTaskId(id);
+        task.setTaskType("OUTBOUND");
+        task.setStatus("CREATED");
+        task.setContainerId(containerId);
+        task.setCreateTime(LocalDateTime.now());
+
+        // 任务进入队列
+        taskMapper.insert(task);
+        return id;
+    }
+
+
+    // 页面出库
+    @Override
+    public String outboundMC(MaterialContainer materialContainer) {
+        if (materialContainerMapper.selectByContainerId(materialContainer.getContainerId()) == null) return "库位信息不存在";
 
         // 添加出库任务记录
         Outbound ob = new Outbound();
@@ -238,23 +236,8 @@ public class TaskServiceImpl implements TaskService {
 
         outboundMapper.insert(ob);
 
-
-        String containerId = materialContainer.getContainerId();
-        // 设置原位置
-        task.setSourceLocationId(inventoryMapper.getLocationAreaIdByContainerId(containerId));
-
-        String id = UUID.randomUUID().toString();
-        task.setTaskId(id);
-        task.setTaskType("OUT");
-        task.setStatus("CREATED");
-        task.setContainerId(materialContainer.getContainerId());
-        task.setMaterialId(materialContainer.getMaterialCode());
-        task.setCreateTime(LocalDateTime.now());
-
-        // 任务进入队列
-        // taskQueue.addTask(task);
-        taskMapper.insert(task);
-        return id;
+        materialContainerMapper.deleteByContainerId(materialContainer.getContainerId());
+        return "解绑成功";
     }
 
     /**
@@ -263,29 +246,9 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public Task getOutboundTask() {
-        LogUtil.success(
-                logMapper,
-                "SELECT",
-                "WCS尝试获取出库任务"
-        );
 
-        // 获取最早的status为Created的任务
-        Task task = taskMapper.getEarliestCreatedTask();
-        if (task == null){
-            LogUtil.fail(
-                    logMapper,
-                    "SELECT",
-                    "FAIL 没有待执行的出库任务",
-                    "NULL"
-            );
-        }
-
-        LogUtil.success(
-                logMapper,
-                "SELECT",
-                "获取出库任务" + task
-        );
-        return task;
+        // 获取最早的status为Created的OUTBOUND任务
+        return taskMapper.getEarliestCreatedTask();
     }
 
     /**
@@ -294,19 +257,15 @@ public class TaskServiceImpl implements TaskService {
      */
     @Override
     public String finishedOutbound(String taskId, String status) {
-        Task task = taskMapper.selectById(taskId);
+        Task task = taskMapper.getTask(taskId);
         if (task == null) return null;
 
         task.setStatus("FINISHED");
         task.setFinishTime(LocalDateTime.now());
         taskMapper.updateById(task);
 
-        // 删除绑定表数据
-        materialContainerMapper.deleteByBatch(task.getContainerId(), task.getMaterialId());
-
-        // 若库存表中容器中物料为0, 删除库存
-        List<MaterialContainer> li = materialContainerMapper.selectByContainerId(task.getContainerId());
-        if (li.isEmpty()) inventoryMapper.deleteByContainerId(task.getContainerId());
+        // 解绑库位与容器
+        inventoryMapper.deleteByContainerId(task.getContainerId());
 
         return "出库任务完成";
     }

@@ -7,7 +7,7 @@
     <div class="card table-card">
 
       <div class="card-title">
-        出库任务列表
+        物料出库记录
       </div>
 
       <!-- 查询区域 -->
@@ -162,7 +162,7 @@
     <div class="card">
 
       <div class="card-title">
-        出库管理
+        物料请求出库
       </div>
 
       <!-- 表单 -->
@@ -996,23 +996,23 @@ const selectMaterial = async (item) => {
   selecting.value = true
 
   // 填充
-  form.value.materialCode =
-      item.code
+  form.value.materialCode = item.code
+  form.value.containerId = item.containerId
+  form.value.batch = item.batch
+  form.value.quantity = item.quantity
+  form.value.customerCode = item.customerCode
 
   // 关闭下拉
   showDropdown.value = false
 
   await nextTick()
 
-  // 查询客户
-  await handleMaterialSelect()
-
   // 恢复状态锁
   setTimeout(() => {
 
     selecting.value = false
 
-    focusById("customerInput")
+    focusById("batchInput")
 
   }, 50)
 
@@ -1040,7 +1040,7 @@ const focusById = async (id) => {
 
 const loadMaterials = async () =>
 { try
-{ const res = await axios.get( '/api/material/list' )
+{ const res = await axios.get( '/api/material/listC' )
   console.log(res.data)
   materialList.value = res.data.data || []
   filteredMaterials.value = materialList.value
@@ -1121,7 +1121,7 @@ const resetForm = () => {
     containerId: ''
 
   }
-  showMessage('重置成功','success')
+  showMessage('操作成功','success')
 
 }
 
@@ -1193,6 +1193,8 @@ onMounted(() => {
 }
 
 .search-bar input {
+
+  width: 150px;
 
   height: 42px;
 

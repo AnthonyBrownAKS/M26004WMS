@@ -68,6 +68,7 @@ public class InventoryServiceImpl implements InventoryService {
             ida.setLocationAreaId(record.getLocationAreaId());
             ida.setRowNo(record.getRowNo());
             ida.setColumnNo(record.getColumnNo());
+            ida.setLayerNo(record.getLayerNo());
             ida.setCreationTime(record.getCreationTime());
 
             ida.setContainerId(record.getContainerId());
@@ -112,23 +113,6 @@ public class InventoryServiceImpl implements InventoryService {
             return "修改成功";
         }
 
-
-
-        // 绑定
-        MaterialContainer mc = new MaterialContainer();
-
-        mc.setMaterialCode(inventoryData.getMaterialCode());
-        mc.setContainerId(inventoryData.getContainerId());
-        mc.setQuantity(inventoryData.getQuantity());
-        mc.setBatch(inventoryData.getBatch());
-        mc.setCustomerCode(inventoryData.getCustomerCode());
-        mc.setCreationTime(LocalDateTime.now());
-
-        materialContainerMapper.insertOrUpdate(mc);
-
-        // 添加
-        // String locationId = locationMapper.selectLocationId(inventoryData.getLocationAreaId(), inventoryData.getRowNo(), inventoryData.getColumnNo());
-        // in.setLocationAreaId(locationId);
         if (inventoryMapper.exitContainer(inventoryData.getContainerId()).isEmpty()){
             in.setCreationTime(LocalDateTime.now());
             inventoryMapper.insertOrUpdate(in);
