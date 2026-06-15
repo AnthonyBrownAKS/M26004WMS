@@ -1,0 +1,55 @@
+INSERT INTO location (
+    Id,
+    WarehouseId,
+    Code,
+    `Row`,
+    `Column`,
+    Layer,
+    CargoStatus,
+    LockState,
+    LockContainerBarcode
+)
+SELECT
+    CONCAT(r.r, c.c, l.l) AS Id,
+    '1' AS WarehouseId,
+    CONCAT(r.r, c.c, l.l) AS Code,
+    r.r AS `Row`,
+    c.c AS `Column`,
+    l.l AS Layer,
+    'EMPTY' AS CargoStatus,
+
+    /* ⭐关键：初始化锁定逻辑 */
+    CASE
+        WHEN r.r = 1 AND c.c = 3 AND l.l = 1 THEN 'INBOUND_LOCK'
+        WHEN r.r = 1 AND c.c = 4 AND l.l = 1 THEN 'INBOUND_LOCK'
+        ELSE 'NONE'
+    END AS LockState,
+
+    'NONE' AS LockContainerBarcode
+FROM
+    (
+        SELECT 1 AS r UNION ALL SELECT 2
+    ) r
+JOIN
+    (
+        SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+        UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8
+        UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12
+        UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16
+        UNION ALL SELECT 17 UNION ALL SELECT 18
+    ) c
+JOIN
+    (
+        SELECT 1 l UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+        UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+    ) l
+WHERE
+    (
+        -- Row 1：Layer 1~2 只有16列
+        (r.r = 1 AND (l.l <= 2 AND c.c <= 16 OR l.l > 2))
+
+        OR
+
+        -- Row 2：全部18列
+        (r.r = 2)
+    );

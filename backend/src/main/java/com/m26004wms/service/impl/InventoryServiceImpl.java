@@ -102,9 +102,11 @@ public class InventoryServiceImpl implements InventoryService {
     public String add(InventoryData inventoryData) {
 
         Inventory in = new Inventory();
-        in.setLocationAreaId(inventoryData.getLocationAreaId());
+        in.setLocationAreaId("A");
+        in.setLocationId(inventoryData.getLocationAreaId());
         in.setRowNo(inventoryData.getRowNo());
         in.setColumnNo(inventoryData.getColumnNo());
+        in.setLayerNo(inventoryData.getLayerNo());
         in.setContainerId(inventoryData.getContainerId());
 
         if (inventoryData.getId() != null){

@@ -73,7 +73,17 @@
                   :class="getColor(item)"
                   @click="handleClick(item)"
               >
-                L{{ item.layer }}
+                <span v-if="getFixedLabel(item.row, item.column, item.layer)">
+  {{
+                    getFixedLabel(item.row, item.column, item.layer) === 'OUTBOUND'
+                        ? '入库'
+                        : '出库'
+                  }}
+</span>
+
+                <span v-else>
+  L{{ item.layer }}
+</span>
               </div>
 
             </div>
@@ -179,8 +189,11 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from "vue";
+import {onMounted, ref, inject} from "vue";
 import axios from "axios";
+
+const showMessage =
+    inject('showMessage')
 
 /* ================= 数据 ================= */
 const locations = ref([])
@@ -214,8 +227,25 @@ const getMaxCol = (row) => row === 1 ? 18 : 18
 const confirmVisible = ref(false)
 const targetItem = ref(null)
 
+const fixedLabels = {
+  "1-3-1": "OUTBOUND", // R1 C3 L1 出库
+  "1-4-1": "INBOUND"   // R1 C4 L1 入库
+}
+
+const getFixedLabel = (row, col, layer) => {
+  const key = `${row}-${col}-${layer}`
+  return fixedLabels[key]
+}
+
+
+
 /* ================= 颜色 ================= */
 const getColor = (item) => {
+
+  const label = getFixedLabel(item.row, item.column, item.layer)
+
+  if (label === "OUTBOUND") return "orange"
+  if (label === "INBOUND") return "orange"
 
   if (item.lockState === "INBOUND_LOCK") {
     return "red"
@@ -233,11 +263,16 @@ const handleClick = async (item) => {
 
   const type = getColor(item)
 
+  if (type === "orange"){
+    showMessage('库位不允许操作', 'error')
+  }
+
   // 🟩 空
   if (type === "green") {
 
     targetItem.value = item
     confirmVisible.value = true
+
 
     return
   }
@@ -248,6 +283,7 @@ const handleClick = async (item) => {
       lockState: null
     })
     item.lockState = null
+    showMessage('库位已解锁', 'success')
   }
 
   // 🟦 查看物料
@@ -279,6 +315,7 @@ const confirmLock = async () => {
 
   item.lockState = "INBOUND_LOCK"
 
+  showMessage('库位已锁定', 'success')
   confirmVisible.value = false
   targetItem.value = null
 }
@@ -347,6 +384,7 @@ onMounted(load)
   display: grid;
   grid-template-columns: 70px repeat(18, 55px);
   margin-bottom: 10px;
+  margin-top: 30px;
 }
 
 .col {
@@ -384,7 +422,8 @@ onMounted(load)
 .layers {
   display: flex;
   flex-direction: column-reverse; /* 从下往上 */
-  gap: 4px;
+  gap: 5px;
+
 }
 
 /* ================= 库位 ================= */
@@ -417,6 +456,8 @@ onMounted(load)
 .green { background: #4caf50; }
 .blue  { background: #2196f3; }
 .red   { background: #f44336; }
+.purple {background: #9c27b0; }
+.orange {background: #ff9800; }
 
 /* ================= 弹窗 ================= */
 .mask {

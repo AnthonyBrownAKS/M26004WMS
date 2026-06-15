@@ -263,7 +263,8 @@ public class TaskController {
                 "修改任务EDIT " + task
         );
 
-        task.setCreateTime(LocalDateTime.now());
+        if (task.getCreateTime() == null) task.setCreateTime(LocalDateTime.now());
+        if (task.getStatus().equals("FINISHED")) task.setFinishTime(LocalDateTime.now());
 
         taskMapper.insertOrUpdate(task);
         return Result.success();

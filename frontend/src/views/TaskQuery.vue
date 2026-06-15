@@ -100,7 +100,7 @@
               {{ formatTime(item.finishTime) }}
             </td>
 
-            <td>{{ item.targetLocationId }}</td>
+            <td>{{ formatLocation(item.targetLocationId) }}</td>
 
             <td>
 
@@ -243,8 +243,8 @@
                 CREATED
               </option>
 
-              <option value="RUNNING">
-                RUNNING
+              <option value="CANCEL">
+                CANCEL
               </option>
 
               <option value="FINISHED">
@@ -267,11 +267,11 @@
 
             <select v-model="editForm.taskType">
 
-              <option value="IN">
+              <option value="INBOUND">
                 入库
               </option>
 
-              <option value="OUT">
+              <option value="OUTBOUND">
                 出库
               </option>
 
@@ -376,6 +376,19 @@ const editVisible = ref(false)
 const deleteVisible = ref(false)
 const deleteId = ref(null)
 
+/* 翻译 */
+const formatLocation = (id) => {
+  if (!id) return ''
+
+  const str = String(id)
+
+  const layer = str.slice(-1)           // 最后一位：层
+  const row = str.slice(0, 1)           // 第一位：行
+  const col = str.slice(1, -1)          // 中间：列（可能多位）
+
+  return `R${row} C${col} L${layer}`
+}
+
 /* 表单 */
 
 const editForm = ref({
@@ -388,7 +401,7 @@ const editForm = ref({
 
   status: 'CREATED',
 
-  taskType: 'IN'
+  taskType: 'INBOUND'
 
 })
 
@@ -494,7 +507,7 @@ const openAdd = () => {
 
     status: 'CREATED',
 
-    taskType: 'IN'
+    taskType: 'INBOUND'
 
   }
 
@@ -521,10 +534,9 @@ const openEdit = (row) => {
 const submitEdit = async () => {
 
   if (
-      !editForm.value.materialId ||
       !editForm.value.containerId
   ) {
-    showMessage('字段不能为空', 'error')
+    showMessage('容器不能为空', 'error')
     return
   }
 
@@ -627,7 +639,7 @@ const getStatusClass = (status) => {
     return 'created'
   }
 
-  if (status === 'RUNNING') {
+  if (status === 'CANCEL') {
 
     return 'running'
   }

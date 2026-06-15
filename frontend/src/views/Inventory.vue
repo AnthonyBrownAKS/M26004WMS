@@ -12,17 +12,6 @@
           库存管理INVENTORY
         </div>
 
-        <div class="header-actions">
-
-          <button
-              class="add-btn"
-              @click="openAdd"
-          >
-            新增库存
-          </button>
-
-        </div>
-
       </div>
 
       <!-- 查询 -->
@@ -36,22 +25,53 @@
             style="color: #2e303a"
         >
 
-        <input
-            v-model="searchLocationAreaId"
-            placeholder="请输入库区"
-            @keyup.enter="loadInventoryList"
-            style="color: #2e303a"
-        >
+        <div class="custom-select">
+
+          <input
+              ref="materialRef"
+              v-model="form.materialCode"
+              placeholder="请选择已入库物料"
+              @focus="handleFocus"
+              @input="handleMaterialInput"
+          />
+
+          <!-- 下拉列表 -->
+
+          <div
+              v-if="showDropdown"
+              class="dropdown"
+          >
+
+            <div
+                v-for="item in filteredMaterials"
+                :key="item.code"
+                class="dropdown-item"
+                @mousedown.prevent="selectMaterial(item)"
+            >
+
+              <div class="material-code">
+                {{ item.code }}
+              </div>
+
+              <div class="material-info">
+                {{ item.name }} / {{ item.spec }}
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
 
         <button @click="loadInventoryList">
           查询
         </button>
 
         <button
-            class="reset-btn"
-            @click="resetSearch"
+            class="add-btn"
+            @click="openAdd"
         >
-          重置
+          新增库存
         </button>
 
       </div>
@@ -570,13 +590,15 @@ import axios from 'axios'
 
 import {
   computed,
-  inject,
+  inject, nextTick,
   onMounted,
   ref
 } from 'vue'
 
 const showMessage =
     inject('showMessage')
+
+const materialRef = ref()
 
 const inventoryList = ref([])
 
@@ -603,6 +625,104 @@ const deleteId = ref(null)
 const expandedRows = ref({})
 
 const detailMap = ref({})
+
+const form = ref({
+
+  materialCode: '',
+
+  customerCode: '',
+
+  batch: '',
+
+  quantity: '',
+
+  containerId: ''
+
+})
+const filteredMaterials = ref([])
+const materialList = ref([])
+const showDropdown = ref(false)
+const selecting = ref(false)
+const selectMaterial = async (item) => {
+
+  selecting.value = true
+
+  // 填充
+  searchContainerId.value = item.containerId
+  form.value.materialCode = item.code
+  form.value.containerId = item.containerId
+  form.value.batch = item.batch
+  form.value.quantity = item.quantity
+  form.value.customerCode = item.customerCode
+
+  // 关闭下拉
+  showDropdown.value = false
+
+  await nextTick()
+
+  // 恢复状态锁
+  setTimeout(() => {
+
+    selecting.value = false
+
+  }, 50)
+
+}
+
+const loadMaterials = async () =>
+{ try
+{ const res = await axios.get( '/api/material/listC' )
+  console.log(res.data)
+  materialList.value = res.data.data || []
+  filteredMaterials.value = materialList.value
+}
+catch (e) { console.error(e)
+  showMessage('数据获取失败','error') } }
+
+const handleFocus = () => {
+
+  filteredMaterials.value =
+      materialList.value
+
+  showDropdown.value = true
+
+}
+
+const handleMaterialInput = (e) => {
+
+  // 如果是程序选择
+  // 直接跳过
+
+  if (selecting.value) {
+
+    return
+
+  }
+
+  const keyword =
+      e.target.value.toLowerCase()
+
+  form.value.code =
+      e.target.value
+
+  filteredMaterials.value =
+      materialList.value.filter(item =>
+
+          item.code
+              .toLowerCase()
+              .includes(keyword)
+
+          ||
+
+          item.name
+              .toLowerCase()
+              .includes(keyword)
+
+      )
+
+  showDropdown.value = true
+
+}
 
 const editForm = ref({
 
@@ -673,6 +793,8 @@ const loadInventoryList = async () => {
 
     total.value =
         data.total || 0
+
+
 
   } catch (e) {
 
@@ -746,9 +868,13 @@ const resetSearch = () => {
 
   searchLocationAreaId.value = ''
 
+  form.value.code = null
+
   current.value = 1
 
   loadInventoryList()
+
+  showMessage('重置成功', 'success')
 
 }
 
@@ -784,20 +910,14 @@ const submitEdit = async () => {
 
   // 容器ID必须以PT开头
   if (!editForm.value.containerId.startsWith('PT')) {
-
     showMessage('容器ID必须以PT开头', 'error')
     return
-
   }
 
   try {
-
     const res = await axios.post(
-
         '/api/inventory/add',
-
         editForm.value
-
     )
 
     if (res.data.code === 200) {
@@ -873,9 +993,25 @@ const formatTime = (time) => {
 
 onMounted(() => {
 
+  loadMaterials()
   loadInventoryList()
 
+  document.addEventListener(
+      'click',
+      handleClickOutside
+  )
+
 })
+
+const handleClickOutside = (e) => {
+
+  if (!e.target.closest('.custom-select')) {
+
+    showDropdown.value = false
+
+  }
+
+}
 
 </script>
 
@@ -931,7 +1067,7 @@ onMounted(() => {
 
   border-radius: 6px;
 
-  background: #1677ff;
+  background: #2bbf25;
 
   color: white;
 
@@ -1490,6 +1626,122 @@ onMounted(() => {
   background: #dbe4ee;
 
   color: #1677ff;
+}
+
+.custom-select {
+
+  position: relative;
+
+  flex: 1;
+
+  height: 42px;
+}
+
+.custom-select input {
+
+  width: 100%;
+
+  height: 42px;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 6px;
+
+  padding: 0 12px;
+
+  outline: none;
+
+  background: #f5f7fb;
+
+  transition: 0.2s;
+
+  color: #333;
+
+  font-size: 14px;
+
+  box-sizing: border-box;
+}
+
+.custom-select input:focus {
+
+  border-color: #409eff;
+
+  background: white;
+}
+
+/* 下拉 */
+
+.dropdown {
+
+  position: absolute;
+
+  top: calc(100% + 4px);
+
+  left: 0;
+
+  width: 100%;
+
+  background: white;
+
+  border: 1px solid #dcdfe6;
+
+  border-radius: 8px;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+  z-index: 999;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+
+  box-sizing: border-box;
+}
+
+/* 选项 */
+
+.dropdown-item {
+
+  padding: 10px 12px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.dropdown-item:hover {
+
+  background: #f5f7fb;
+}
+
+.material-code {
+
+  font-size: 14px;
+
+  color: #333;
+
+  font-weight: 600;
+}
+
+.material-info {
+
+  font-size: 12px;
+
+  color: #999;
+
+  margin-top: 4px;
+}
+.action-buttons {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 8px;
 }
 
 </style>

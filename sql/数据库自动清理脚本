@@ -1,0 +1,19 @@
+-- Event Scheduler
+SHOW VARIABLES LIKE 'event_scheduler';
+SET GLOBAL event_scheduler = ON;
+
+-- 设置Mysql文件并重启
+[mysqld]
+event_scheduler=ON
+
+-- 自动清理事件, 以'api_log'的'create_time'字段为例
+-每天执行一次
+-删除7天前的数据
+-服务重启后仍然有效
+CREATE EVENT IF NOT EXISTS clean_api_log
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+DELETE FROM api_log
+WHERE create_time < DATE_SUB(NOW(), INTERVAL 7 DAY);
+

@@ -763,7 +763,7 @@ const confirmScan = async () => {
     console.error(e)
 
     showMessage(
-        '扫码解析失败',
+        '未找到对应物料',
         'error'
     )
 

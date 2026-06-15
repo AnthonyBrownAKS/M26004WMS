@@ -587,8 +587,6 @@ const confirmScan = () => {
 
     }
 
-    alert(arr[0].trim())
-
     // 客商代码
 
     form.value.customerCode =

@@ -117,11 +117,15 @@ public class InventoryController {
                     "修改库存EDIT " + inventoryData
             );
 
-            Location location = locationMapper.selectById(inventoryData.getId());
+            Location location = locationMapper.selectById(inventoryData.getLocationAreaId());
             inventoryData.setColumnNo(location.getColumn());
             inventoryData.setLayerNo(location.getLayer());
             inventoryData.setRowNo(location.getRow());
             inventoryData.setLocationAreaId("A");
+
+            location.setCargoStatus("FULL");
+            location.setLockContainerBarcode(inventoryData.getContainerId());
+            locationMapper.insertOrUpdate(location);
 
             inventoryService.add(inventoryData);
             return Result.success();
